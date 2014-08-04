@@ -71,11 +71,11 @@ function New-NuGetPackage{
 					
 						if ($includeSymbolPackage)
 						{
-							& $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput" -Symbols
+							return & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput" -Symbols
 						}
 						else
 						{
-							& $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput"	
+							return & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput"	
 						}
 
 					}
@@ -86,28 +86,3 @@ function New-NuGetPackage{
 				}
 		}
 }
-# SIG # Begin signature block
-# MIIEMwYJKoZIhvcNAQcCoIIEJDCCBCACAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
-# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU1gh10EthccD6WJ3oZ/7ggu4f
-# BTygggI9MIICOTCCAaagAwIBAgIQBwSeB23pR7ROOOYNHq4avjAJBgUrDgMCHQUA
-# MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
-# Fw0xNDAzMjcxNTM4MTJaFw0zOTEyMzEyMzU5NTlaMBoxGDAWBgNVBAMTD1Bvd2Vy
-# U2hlbGwgVXNlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAyCSg/wCkjDGS
-# Mv7A5OLubZZCxcRW2lSRerbfN8KE1EsAD3X7E/Jy6oOaH8h7+r83744v4TUmxQ23
-# 9rptO5H2NPRl6+HpCapatTGHodCLYcdV+PbnfQP19g+2VgpOuzJc1ltTF+cQbzMY
-# 8aLbt2njo3jPAgIT1cEx5j/+Hd96vqUCAwEAAaN2MHQwEwYDVR0lBAwwCgYIKwYB
-# BQUHAwMwXQYDVR0BBFYwVIAQvg+wxIsvFis5+YRLK6JQfqEuMCwxKjAoBgNVBAMT
-# IVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdIIQijjs33C86o9FovTA
-# 2hbxiTAJBgUrDgMCHQUAA4GBAA1qfdSfmUXeXAvocTMh3arC5I4orm6mPWK2XdyU
-# WdeVWKXRHg1ZTZY54OOYVc7Yl/VH90DvyxMbsJw+seyPkygAnXRg5gbgeWIT8/lT
-# lgSnCbIm1g9Qx0tRKnyuKeRgB0rQ/cQehOmmPx8IH3tpIEfWctuA/V06W94T6Ot2
-# 28sEMYIBYDCCAVwCAQEwQDAsMSowKAYDVQQDEyFQb3dlclNoZWxsIExvY2FsIENl
-# cnRpZmljYXRlIFJvb3QCEAcEngdt6Ue0TjjmDR6uGr4wCQYFKw4DAhoFAKB4MBgG
-# CisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcC
-# AQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJKoZIhvcNAQkEMRYE
-# FOcGL5ZF6xDMPpQIze+e/ix8mDZUMA0GCSqGSIb3DQEBAQUABIGAub/VSNtig6i1
-# ODpG99ekAEtM/OBn6Uls1C9eNxc54+WcvDcWipXazcH/qgHaPbO9UEZNaqxP6DyL
-# solln+gt1lj8LrU6JAS+lKPhMhtRuI1IdHxPWJnoYT4xUWR5199lme64nbj2OM6x
-# LuHZhoEUCprqMe8emcp8iRIiPZYYjBI=
-# SIG # End signature block

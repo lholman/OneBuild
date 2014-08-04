@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>Pester</id>
+    <version>3.0.0-beta2</version>
+    <title>Pester</title>
+    <authors>Pester Team</authors>
+    <owners>Pester Team</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <projectUrl>https://github.com/Pester/Pester</projectUrl>
+    <iconUrl>http://pesterbdd.com/images/Pester.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Pester provides a framework for running BDD style Tests to execute and validate PowerShell commands inside of PowerShell and offers a powerful set of Mocking Functions that allow tests to mimic and mock the functionality of any command inside of a piece of powershell code being tested. Pester tests can execute any command or script that is accesible to a pester test file. This can include functions, Cmdlets, Modules and scripts. Pester can be run in ad hoc style in a console or it can be integrated into the Build scripts of a Continuous Integration system.</description>
+    <summary>A BDD style testing tool for Powershell</summary>
+    <releaseNotes>Features added:
+Add code coverage
+
+Features fixed:
+Fix TestName
+Fix direct execution of tests when the script is dot-sourced to global scope
+Fix mock parameter filter in strict mode
+Fix nUnit schema compatibility
+Fix special characters in nUnit output</releaseNotes>
+    <tags>powershell unit testing bdd tdd mocking</tags>
+  </metadata>
+</package>

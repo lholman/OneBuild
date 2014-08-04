@@ -1,27 +1,20 @@
-
 <#
 .Synopsis
 	OneBuild build script invoked by Invoke-Build.
 
 .Description
-	TODO: Declare build parameters as standard script parameters. Parameters
-	are specified directly for Invoke-Build if their names do not conflict.
-	Otherwise or alternatively they are passed in as "-Parameters @{...}".
+	OneBuild is a modular set of .NET solution build scripts written in PowerShell. See https://github.com/lholman/OneBuild
 #>
 
 # TODO: [CmdletBinding()] is optional but recommended for strict name checks.
 [CmdletBinding()]
 param(
+	$msbuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",
+	$configMode = "Debug",
+	$buildCounter = "999",
+	$updateNuGetPackages = $false,
+	$webDeployPackage = $false
 )
-
-# TODO: Move some properties to script param() in order to use as parameters.
- 
-	
-$msbuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe"
-$configMode = "Debug"
-$buildCounter = "999"
-$updateNuGetPackages = $false
-$webDeployPackage = $false
 
 $ErrorActionPreference = 'Stop'
 $DebugPreference = "Continue"
@@ -140,9 +133,9 @@ task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 #*================================================================================================
 task Set-VersionNumber Read-MajorMinorVersionNumber, {
 
-	Import-Module "$baseModulePath\Set-BuildNumberWithTfsChangesetDetail.psm1"
-	$script:assemblyInformationalVersion = Set-BuildNumberWithTfsChangesetDetail -major $major -minor $minor -buildCounter $buildCounter
-	Remove-Module Set-BuildNumberWithTfsChangesetDetail
+	Import-Module "$baseModulePath\Set-BuildNumberWithGitCommitDetail.psm1"
+	$script:assemblyInformationalVersion = Set-BuildNumberWithGitCommitDetail -major $major -minor $minor -buildCounter $buildCounter
+	Remove-Module Set-BuildNumberWithGitCommitDetail
 }
 
 #*================================================================================================

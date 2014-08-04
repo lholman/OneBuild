@@ -5,14 +5,25 @@
     <version>1.0.0</version>
     <authors>Lloyd Holman</authors>
     <owners>Lloyd Holman</owners>
+    <licenseUrl>https://github.com/lholman/OneBuild</licenseUrl>
+    <projectUrl>https://github.com/lholman/OneBuild</projectUrl>
+    <iconUrl>https://github.com/lholman/OneBuild</iconUrl>	
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery OneBuild aims to make the Commit (versioning, compilation, unit testing and packaging of binaries) a standard and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. </description>
+    <description>OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery OneBuild aims to make the Commit (versioning, compilation, unit testing and packaging of binaries) a standard and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. OneBuild is proud to rely on Invoke-Build (https://github.com/nightroman/Invoke-Build) for task automation.</description>
     <summary>OneBuild is a modular set of .NET solution build scripts written in PowerShell.</summary>
     <releaseNotes />
     <copyright>Copyright 2014</copyright>
     <dependencies>
       <dependency id="NuGet.CommandLine" version="2.7.3" />
       <dependency id="NUnit.Runners" version="2.6.3" />
+	  <dependency id="Invoke-Build" version="2.9.12" />  
     </dependencies>
   </metadata>
+  <files>
+    <file src="tools\**\*.*" target="\tools" />
+	<file src=".build.ps1" target="\tools" />
+	<file src="*.ps1" target="\tools" />
+	<file src="LICENSE" target="\LICENSE" />
+	<file src="README.MD" target="\README.MD" />
+  </files>  
 </package>
