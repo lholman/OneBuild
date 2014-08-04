@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>OneBuild</id>
+    <version>1.0.0</version>
+    <authors>Lloyd Holman</authors>
+    <owners>Lloyd Holman</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery OneBuild aims to make the Commit (versioning, compilation, unit testing and packaging of binaries) a standard and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. </description>
+    <summary>OneBuild is a modular set of .NET solution build scripts written in PowerShell.</summary>
+    <releaseNotes />
+    <copyright>Copyright 2014</copyright>
+    <dependencies>
+      <dependency id="NuGet.CommandLine" version="2.7.3" />
+      <dependency id="NUnit.Runners" version="2.6.3" />
+    </dependencies>
+  </metadata>
+</package>
