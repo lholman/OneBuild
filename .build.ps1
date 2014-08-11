@@ -3,17 +3,15 @@
 	OneBuild build script invoked by Invoke-Build.
 
 .Description
-	OneBuild is a modular set of .NET solution build scripts written in PowerShell. See https://github.com/lholman/OneBuild
+	OneBuild is a modular set of convention based .NET solution build scripts written in PowerShell, relying on Invoke-Build for task automation. See https://github.com/lholman/OneBuild form more details.
 #>
 
-# TODO: [CmdletBinding()] is optional but recommended for strict name checks.
 [CmdletBinding()]
 param(
 	$msbuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",
 	$configMode = "Debug",
 	$buildCounter = "999",
-	$updateNuGetPackages = $false,
-	$webDeployPackage = $false
+	$updateNuGetPackages = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,19 +22,19 @@ if ((Test-Path -path "$basePath\tools\powershell\modules" ) -eq $True)
 {
 	$baseModulePath = "$basePath\tools\powershell\modules"
 }else{
-	#We order descending so that we can easily drop in a locally built version of OneBuild with an later version number (i.e. with a high buildCounter value) for testing.
+	#We order descending so that we can easily drop in a locally built version of OneBuild with a later version number (i.e. with a high buildCounter value) for testing.
 	$baseModulePath = Get-ChildItem .\packages -Recurse | Where-Object {$_.Name -like 'OneBuild.*' -and $_.PSIsContainer -eq $True} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
 	$baseModulePath = "$baseModulePath\tools\powershell\modules"
 }
 
-Write-Warning "Base module path: $baseModulePath"
+Write-Output "Base module path: $baseModulePath"
 
 $assemblyInformationalVersion = ""
 $major = $null
 $minor = $null
 $versionNumberFileName = "VersionNumber.xml"
 
-# TODO: Default task. If it is the first then any name can be used instead.
+# Default task.
 task . Invoke-Commit
 
 #*================================================================================================
@@ -44,9 +42,8 @@ task . Invoke-Commit
 #* assemblies, setting a common build number, executing unit tests and packaging the assemblies 
 #* as a NuGet package
 #*================================================================================================
-task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, New-WebDeployPackages, Undo-CheckedOutFiles, {
+task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, Undo-CheckedOutFiles, {
 	
-
 }
 
 #*================================================================================================
@@ -66,7 +63,7 @@ task Undo-CheckedOutFiles -If { ($configMode -eq "Debug") } {
 #* Purpose: Generates new Nuget ([packageName].[version].nupkg) and optional Symbols 
 #* ({packageName].[version].symbols.nupkg) package(s) by passing all found .nuspec files.
 #*================================================================================================
-task New-Packages -If { $webDeployPackage -eq $False } Set-VersionNumber, {
+task New-Packages Set-VersionNumber, {
 
 	if ($assemblyInformationalVersion -ne "")
 	{
@@ -85,29 +82,6 @@ task New-Packages -If { $webDeployPackage -eq $False } Set-VersionNumber, {
 }
 
 #*================================================================================================
-#* Purpose: Executes MSBuild.exe to create WebDeploy Package(s) for Visual Studio Web Projects 
-#* matching a defined naming convention.
-#*================================================================================================
-task New-WebDeployPackages -If { $webDeployPackage -eq $True } Set-VersionNumber, {
-
-	if ($assemblyInformationalVersion -ne "")
-	{
-		$versionLabels = $assemblyInformationalVersion.Split(".")
-		$webDeployPackageVersion = $versionLabels[0] + "." + $versionLabels[1] + "." + $versionLabels[2]
-	}
-	else
-	{
-		$webDeployPackageVersion = "$major.$minor.$buildCounter"
-	}
-	
-	Write-Host "Will use version: $webDeployPackageVersion to build NuGet package"
-	
-	Import-Module "$baseModulePath\New-WebDeployPackages.psm1"
-	New-WebDeployPackages -configMode $configMode -version $webDeployPackageVersion
-	Remove-Module New-WebDeployPackages
-}
-
-#*================================================================================================
 #* Purpose: Executes all NUnit tests for compiled .NET assemblies matching a defined naming convention.
 #*================================================================================================
 task Invoke-UnitTests {
@@ -123,9 +97,18 @@ task Invoke-UnitTests {
 #*================================================================================================
 task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 
-	Import-Module "$baseModulePath\New-CompiledSolution.psm1"
-	New-CompiledSolution -configMode $configMode
-	Remove-Module New-CompiledSolution
+	$errorCode = 0
+	try {
+		Import-Module "$baseModulePath\New-CompiledSolution.psm1"
+		$errorCode = New-CompiledSolution -configMode $configMode
+	}
+	catch {
+		throw
+	}
+	finally {
+		Remove-Module New-CompiledSolution
+	}
+	assert ($errorCode -eq 0)
 }
 
 #*================================================================================================
@@ -187,6 +170,29 @@ task Invoke-HardcoreClean {
 	Import-Module "$baseModulePath\Remove-FoldersRecursively.psm1"
 	Remove-FoldersRecursively
 	Remove-Module Remove-FoldersRecursively
+}
+
+#*================================================================================================
+#* Purpose: Runs the Pester (https://github.com/pester/Pester) based unit tests for OneBuild
+#*================================================================================================
+task Invoke-OneBuildUnitTests {
+	
+	$pesterPath = Get-ChildItem "$basePath\packages" | Where-Object {$_.Name -like 'pester*'} | Where-Object {$_.PSIsContainer -eq $True} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
+	
+	assert ($pesterPath -ne $Null) "No pester NuGet package found under $basePath\packages, maybe try restoring all NuGet packages?"
+
+	Import-Module "$pesterPath\tools\Pester.psm1"
+	$failedTests = 0
+	try {
+		$failedTests = Invoke-Pester -Path "$basePath\tests" -EnableExit
+	}
+	catch {
+		throw
+	}
+	finally {
+		Remove-Module Pester
+	}
+	assert ($failedTests -eq 0)
 }
 
 

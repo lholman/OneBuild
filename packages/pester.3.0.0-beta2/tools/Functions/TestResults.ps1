@@ -200,6 +200,7 @@ function Get-RunTimeEnvironment() {
 }
 
 function Exit-WithCode ($FailedCount) {
-    $host.SetShouldExit($FailedCount)
+    #$host.SetShouldExit($FailedCount)
+	return $FailedCount
 }
 

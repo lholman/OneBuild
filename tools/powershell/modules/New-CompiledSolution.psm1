@@ -34,7 +34,7 @@ function New-CompiledSolution{
 				Mandatory = $False )]
 				[string]$configMode = "Release",	
 			[Parameter(
-				Position = 1,
+				Position = 2,
 				Mandatory = $False )]
 				[string]$nuGetPath				
 			)			
@@ -54,42 +54,58 @@ function New-CompiledSolution{
 					
 					Write-Host "Using ""Configuration"" mode $configMode. Modify this by passing in a value for ""$configMode"""
 
-					#Our convention, build the first solution file we find (ordered alphabetically) in the current folder. 
-					$solutionFile = Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.sln'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+					$solutionFile = Get-FirstSolutionFile
 					
-					Write-Host "Restoring NuGet packages for ""$solutionFile""."
-					exec { & $nugetPath restore $solutionFile }
-					Write-Host "Building ""$solutionFile"" in ""$configMode"" mode."
-					exec { & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m }
+					if ($solutionFile -eq $null)
+					{
+						Write-Error "No solution (*.sln) file found to compile."
+						Return 1
+					}
 					
+					Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
+					
+					Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
+				
 				}
 				catch [Exception] {
 					throw "Error compiling solution file: $solutionFile. `r`n $_.Exception.ToString()"
 				}
 		}
 }
-# SIG # Begin signature block
-# MIIEMwYJKoZIhvcNAQcCoIIEJDCCBCACAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
-# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUypPwPepdy5G6cewfaHIgIIXN
-# WPqgggI9MIICOTCCAaagAwIBAgIQBwSeB23pR7ROOOYNHq4avjAJBgUrDgMCHQUA
-# MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
-# Fw0xNDAzMjcxNTM4MTJaFw0zOTEyMzEyMzU5NTlaMBoxGDAWBgNVBAMTD1Bvd2Vy
-# U2hlbGwgVXNlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAyCSg/wCkjDGS
-# Mv7A5OLubZZCxcRW2lSRerbfN8KE1EsAD3X7E/Jy6oOaH8h7+r83744v4TUmxQ23
-# 9rptO5H2NPRl6+HpCapatTGHodCLYcdV+PbnfQP19g+2VgpOuzJc1ltTF+cQbzMY
-# 8aLbt2njo3jPAgIT1cEx5j/+Hd96vqUCAwEAAaN2MHQwEwYDVR0lBAwwCgYIKwYB
-# BQUHAwMwXQYDVR0BBFYwVIAQvg+wxIsvFis5+YRLK6JQfqEuMCwxKjAoBgNVBAMT
-# IVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdIIQijjs33C86o9FovTA
-# 2hbxiTAJBgUrDgMCHQUAA4GBAA1qfdSfmUXeXAvocTMh3arC5I4orm6mPWK2XdyU
-# WdeVWKXRHg1ZTZY54OOYVc7Yl/VH90DvyxMbsJw+seyPkygAnXRg5gbgeWIT8/lT
-# lgSnCbIm1g9Qx0tRKnyuKeRgB0rQ/cQehOmmPx8IH3tpIEfWctuA/V06W94T6Ot2
-# 28sEMYIBYDCCAVwCAQEwQDAsMSowKAYDVQQDEyFQb3dlclNoZWxsIExvY2FsIENl
-# cnRpZmljYXRlIFJvb3QCEAcEngdt6Ue0TjjmDR6uGr4wCQYFKw4DAhoFAKB4MBgG
-# CisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcC
-# AQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJKoZIhvcNAQkEMRYE
-# FPAbJp77VK1FhxgybjRci1ePJCfMMA0GCSqGSIb3DQEBAQUABIGAUkwPdIBU7Yo1
-# T5VLD3eCI0/r5uIh55ZVZO8TL3z3reNkBgaSPM4WUCu1dbYs1aG2rFdnAz5KC6rh
-# A9TmjGccMlD3pG/feolRYKO/hgp61+FGer/0T19c8q5PmXp3V5fMfthKd2qImc3K
-# +sZ36b5vpkAWs9RZrC8INZ7RmJbOKCE=
-# SIG # End signature block
+function Get-FirstSolutionFile {
+	#Convention: Get the first solution file we find (ordered alphabetically) in the current folder. 
+	return Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.sln'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+}
+
+function Restore-SolutionNuGetPackages {
+	Param(			
+		[Parameter(
+			Position = 1,
+			Mandatory = $True )]
+			[string]$solutionFile,	
+		[Parameter(
+			Position = 2,
+			Mandatory = $True )]
+			[string]$nuGetPath				
+	)	
+	Write-Host "Restoring NuGet packages for ""$solutionFile""."
+	& $nugetPath restore $solutionFile
+}
+
+function Invoke-MsBuildCompilationForSolution {
+	Param(			
+		[Parameter(
+			Position = 1,
+			Mandatory = $True )]
+			[string]$solutionFile,	
+		[Parameter(
+			Position = 2,
+			Mandatory = $True )]
+			[string]$configMode				
+	)
+	Write-Host "Building ""$solutionFile"" in ""$configMode"" mode."
+	& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m
+
+}
+
+Export-ModuleMember -Function New-CompiledSolution
