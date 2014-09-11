@@ -168,7 +168,7 @@ task New-DefaultVersionNumberXmlFile -If { ($configMode -eq "Debug") -and (!(Tes
 task Invoke-HardcoreClean {
 
 	Import-Module "$baseModulePath\Remove-FoldersRecursively.psm1"
-	Remove-FoldersRecursively
+	Remove-FoldersRecursively -deleteIncludePath @("bin","obj","BuildOutput")
 	Remove-Module Remove-FoldersRecursively
 }
 
@@ -182,9 +182,9 @@ task Invoke-OneBuildUnitTests {
 	assert ($pesterPath -ne $Null) "No pester NuGet package found under $basePath\packages, maybe try restoring all NuGet packages?"
 
 	Import-Module "$pesterPath\tools\Pester.psm1"
-	$failedTests = 0
+	$result
 	try {
-		$failedTests = Invoke-Pester -Path "$basePath\tests" -EnableExit
+		$result = Invoke-Pester -Path "$basePath\tests" -PassThru
 	}
 	catch {
 		throw
@@ -192,7 +192,7 @@ task Invoke-OneBuildUnitTests {
 	finally {
 		Remove-Module Pester
 	}
-	assert ($failedTests -eq 0)
+	assert ($result.FailedCount -eq 0)
 }
 
 

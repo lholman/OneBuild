@@ -40,9 +40,8 @@ Describe "New-CompiledSolution" {
 		
 		Import-Module "$baseModulePath\$sut"
 		Mock -ModuleName $sut Get-FirstSolutionFile { return $null }
-		
 		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
-            $Message -eq 'No solution (*.sln) file found to compile.'
+            $Message -eq "No solution (*.sln) file found to compile."
         }
 		
 		$result = 0
@@ -60,7 +59,7 @@ Describe "New-CompiledSolution" {
 			Assert-VerifiableMocks
 		}
 
-        It "Exits with code 1" {
+        It "Exits module with code 1" {
             $result | Should Be 1
         }		
 	}
