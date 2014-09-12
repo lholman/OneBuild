@@ -20,7 +20,7 @@ Describe "Remove-FoldersRecursively_1" {
         }
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively -deleteIncludePath @("bin")
+			$result = Remove-FoldersRecursively -deleteIncludePaths @("bin")
 		}
 		catch {
 			throw
@@ -40,30 +40,27 @@ Describe "Remove-FoldersRecursively_1" {
 }
 
 Describe "Remove-FoldersRecursively_2" {		
-	Context "When module is invoked with empty deleteIncludePath parameter" {
+	Context "When module is invoked with an empty deleteIncludePaths parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 		#Calling script is the root of the OneBuild folder, where Invoke-Build invokes pester
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
-		Mock -ModuleName $sut Write-Output {} -Verifiable -ParameterFilter {
-            $Object -like "*Cannot validate argument on parameter 'deleteIncludePaths'*."
-        }
-		Write-Host $Object
+
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively -deleteIncludePaths @()
+			Remove-FoldersRecursively -deleteIncludePaths @()
 		}
+		#catch [System.Management.Automation.ParameterBindingValidationException] {
 		catch {
-			#throw
+			$result = "$_.Exception.Message"
 		}
 		finally {
-			Write-Host "result: $result"
 			Remove-Module $sut
 		}
 		
-		It "Should write a descriptive error" {
-			Assert-VerifiableMocks
+		It "Should throw a terminating exception" {
+			$result | Should Match "Cannot validate argument on parameter 'deleteIncludePaths'"
 		}		
 	}
 }
@@ -79,7 +76,7 @@ Describe "Remove-FoldersRecursively_3" {
 				
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePath @("bin")
+			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePaths @("bin")
 		}
 		catch {
 			throw
@@ -99,40 +96,7 @@ Describe "Remove-FoldersRecursively_3" {
 }
 
 Describe "Remove-FoldersRecursively_4" {
-	Context "When module is invoked with a basePath that DOES exist" {
-		
-		Import-Module "$baseModulePath\$sut"
-		#Here we get the TestDrive using pesters $TestDrive variable which holds the full file system location to the temporary PSDrive. 
-		$testBasePath = "$TestDrive"
-		
-		Mock -ModuleName $sut Write-Host {} -Verifiable -ParameterFilter {
-            $Object -eq "Searching for paths to delete, recursively from: $testBasePath"
-        }		
-		
-		$result = ""
-		try {
-			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePath @("bin")
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-
-		It "Should search the basePath recursively for paths to delete" {
-			Assert-VerifiableMocks
-		}		
-		
-		It "Should exit the module with code 0" {
-            $result | Should Be 0
-        }		
-		
-	}
-}
-
-Describe "Remove-FoldersRecursively_5" {
-	Context "When valid basePath includes paths to delete" {
+	Context "When a valid basePath includes paths to delete" {
 		
 		Import-Module "$baseModulePath\$sut"
 		#Here we get the TestDrive using pesters $TestDrive variable which holds the full file system location to the temporary PSDrive. 
@@ -146,10 +110,8 @@ Describe "Remove-FoldersRecursively_5" {
             $Object -eq "Cleaning: $testBasePath\bin"
         }			
 		$result = ""
-		try {
-			
-
-			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePath @("bin")
+		try {				
+			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePaths @("bin")
 		}
 		catch {
 			throw
@@ -158,7 +120,7 @@ Describe "Remove-FoldersRecursively_5" {
 			Remove-Module $sut
 		}
 
-		It "Should set the path to the supplied basePath parameter value" {
+		It "Should search the basePath recursively for paths to delete" {
 			Assert-VerifiableMocks
 		}		
 		

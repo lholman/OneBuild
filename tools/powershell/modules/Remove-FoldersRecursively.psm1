@@ -24,10 +24,13 @@ function Remove-FoldersRecursively{
 	[cmdletbinding()]
 		Param(
 			[Parameter(Mandatory = $False)]
-				[string]$basePath = "",
-			[Parameter(Mandatory = $True)]
+				[string]
+				$basePath = "",
+			[Parameter(Mandatory = $True,
+						HelpMessage="Please supply a value for deleteIncludePaths")]
 				[ValidateNotNullOrEmpty()]
-				[array]$deleteIncludePaths		
+				[array]
+				$deleteIncludePaths		
 			)
 	Begin {
 			$DebugPreference = "Continue"
@@ -49,7 +52,7 @@ function Remove-FoldersRecursively{
 						#? { $_.psiscontainer -and $_.fullname -notmatch 'packages' } | #Uncomment to exclude a particular root folder
 						foreach ($_) { 
 							Write-Host "Cleaning: $_"
-							#Remove-Item $_ -Force -Recurse -ErrorAction SilentlyContinue		
+							Remove-Item $_ -Force -Recurse -ErrorAction SilentlyContinue		
 						}	
 					
 					return 0
