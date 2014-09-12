@@ -20,7 +20,7 @@ Describe "Remove-FoldersRecursively_1" {
         }
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively
+			$result = Remove-FoldersRecursively -deleteIncludePath @("bin")
 		}
 		catch {
 			throw
@@ -39,7 +39,36 @@ Describe "Remove-FoldersRecursively_1" {
 	}
 }
 
-Describe "Remove-FoldersRecursively_2" {	
+Describe "Remove-FoldersRecursively_2" {		
+	Context "When module is invoked with empty deleteIncludePath parameter" {
+		
+		Import-Module "$baseModulePath\$sut"
+		#Calling script is the root of the OneBuild folder, where Invoke-Build invokes pester
+
+		$testBasePath = Join-Path "$here" "\.." -Resolve
+		Mock -ModuleName $sut Write-Output {} -Verifiable -ParameterFilter {
+            $Object -like "*Cannot validate argument on parameter 'deleteIncludePaths'*."
+        }
+		Write-Host $Object
+		$result = ""
+		try {
+			$result = Remove-FoldersRecursively -deleteIncludePaths @()
+		}
+		catch {
+			#throw
+		}
+		finally {
+			Write-Host "result: $result"
+			Remove-Module $sut
+		}
+		
+		It "Should write a descriptive error" {
+			Assert-VerifiableMocks
+		}		
+	}
+}
+
+Describe "Remove-FoldersRecursively_3" {	
 	Context "When module is invoked with a basePath that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
@@ -50,7 +79,7 @@ Describe "Remove-FoldersRecursively_2" {
 				
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively -basePath $testBasePath
+			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePath @("bin")
 		}
 		catch {
 			throw
@@ -69,7 +98,7 @@ Describe "Remove-FoldersRecursively_2" {
 	}
 }
 
-Describe "Remove-FoldersRecursively_3" {
+Describe "Remove-FoldersRecursively_4" {
 	Context "When module is invoked with a basePath that DOES exist" {
 		
 		Import-Module "$baseModulePath\$sut"
@@ -82,7 +111,7 @@ Describe "Remove-FoldersRecursively_3" {
 		
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively -basePath $testBasePath
+			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePath @("bin")
 		}
 		catch {
 			throw
@@ -102,7 +131,7 @@ Describe "Remove-FoldersRecursively_3" {
 	}
 }
 
-Describe "Remove-FoldersRecursively_4" {
+Describe "Remove-FoldersRecursively_5" {
 	Context "When valid basePath includes paths to delete" {
 		
 		Import-Module "$baseModulePath\$sut"
