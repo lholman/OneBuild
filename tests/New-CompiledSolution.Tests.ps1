@@ -15,6 +15,9 @@ Describe "New-CompiledSolution" {
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { }
+		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
+            $Message -eq "Using ""Configuration"" mode Release. Modify this by passing in a value for ""Release"""
+        }
 		
 		$result = 0
 		try {
@@ -33,7 +36,11 @@ Describe "New-CompiledSolution" {
 		
 		It "Should call Invoke-MsBuildCompilationForSolution to compile the solution with MSBuild" {
             Assert-MockCalled Invoke-MsBuildCompilationForSolution -ModuleName $sut -Times 1
-        }		
+        }	
+
+		It "Should write a descriptive warning about configuration mode" {
+			Assert-VerifiableMocks 
+		}	
 	}
 	
 	Context "When there is NO solution file" {

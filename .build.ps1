@@ -76,9 +76,9 @@ task New-Packages Set-VersionNumber, {
 	}
 	
 	Write-Host "Will use version: $nuGetPackageVersion to build NuGet package"
-	Import-Module "$baseModulePath\New-NuGetPackage.psm1"
-	New-NuGetPackage -versionNumber $nuGetPackageVersion
-	Remove-Module New-NuGetPackage
+	Import-Module "$baseModulePath\New-NuGetPackages.psm1"
+	New-NuGetPackages -versionNumber $nuGetPackageVersion
+	Remove-Module New-NuGetPackages
 }
 
 #*================================================================================================
@@ -183,6 +183,7 @@ task Invoke-OneBuildUnitTests {
 
 	Import-Module "$pesterPath\tools\Pester.psm1"
 	$result
+	Write-Host "Base path again: $basePath"
 	try {
 		$result = Invoke-Pester -Path "$basePath\tests" -PassThru
 	}

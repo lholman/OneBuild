@@ -36,13 +36,13 @@ function Remove-FoldersRecursively{
 			$DebugPreference = "Continue"
 		}	
 	Process {
+				
 				$path = Confirm-Path -basePath $basePath
-				if ($path -eq $null)
+
+				if ($path -eq 1)
 				{
-					Write-Error "Supplied basePath: $basePath does not exist."
 					return 1
 				}
-
 				Write-Host "Searching for paths to delete, recursively from: $path"
 				
 				Try 
@@ -67,24 +67,14 @@ function Remove-FoldersRecursively{
 
 function Confirm-Path {
 	Param(			
-		[Parameter(
-			Position = 1,
-			Mandatory = $False )]
-			[string]$basePath = ""			
-	)
-	
-	if ($basePath -eq "")
-	{
-		#Set the basePath to the calling scripts path (using Resolve-Path .)
-		return Resolve-Path .
-	}
-	if (Test-Path $basePath) 
-	{
-		#Write-Host "return basePath: $basePath"
-		return $basePath
-	}
-	
-	return $null
+			[Parameter(
+				Mandatory = $True )]
+				[string]$basePath			
+		)	
+	Import-Module "$PSScriptRoot\Get-Path.psm1"
+	$path = Get-Path -basePath $basePath
+	Remove-Module Get-Path
+	return $path
 }
 
 Export-ModuleMember -Function Remove-FoldersRecursively

@@ -8,38 +8,8 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
+
 Describe "Remove-FoldersRecursively_1" {		
-	Context "When module is invoked with NO basePath parameter" {
-		
-		Import-Module "$baseModulePath\$sut"
-		#Calling script is the root of the OneBuild folder, where Invoke-Build invokes pester
-
-		$testBasePath = Join-Path "$here" "\.." -Resolve
-		Mock -ModuleName $sut Write-Host {} -Verifiable -ParameterFilter {
-            $Object -eq "Searching for paths to delete, recursively from: $testBasePath"
-        }
-		$result = ""
-		try {
-			$result = Remove-FoldersRecursively -deleteIncludePaths @("bin")
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-		
-		It "Should set the path to the calling scripts path" {
-			Assert-VerifiableMocks
-		}
-		
-		It "Should exit the module with code 0" {
-            $result | Should Be 0
-        }		
-	}
-}
-
-Describe "Remove-FoldersRecursively_2" {		
 	Context "When module is invoked with an empty deleteIncludePaths parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
@@ -65,14 +35,12 @@ Describe "Remove-FoldersRecursively_2" {
 	}
 }
 
-Describe "Remove-FoldersRecursively_3" {	
+Describe "Remove-FoldersRecursively_2" {	
 	Context "When module is invoked with a basePath that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
+		Mock -ModuleName $sut Confirm-Path { return 1 }
 		$testBasePath = "$TestDrive\NonExistentPath\"
-		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
-            $Message -eq "Supplied basePath: $testBasePath does not exist."
-        }
 				
 		$result = ""
 		try {
@@ -84,10 +52,6 @@ Describe "Remove-FoldersRecursively_3" {
 		finally {
 			Remove-Module $sut
 		}
-		
-		It "Should write a descriptive error" {
-			Assert-VerifiableMocks
-		}
 
         It "Should exit the module with code 1" {
             $result | Should Be 1
@@ -95,7 +59,7 @@ Describe "Remove-FoldersRecursively_3" {
 	}
 }
 
-Describe "Remove-FoldersRecursively_4" {
+Describe "Remove-FoldersRecursively_3" {
 	Context "When a valid basePath includes paths to delete" {
 		
 		Import-Module "$baseModulePath\$sut"

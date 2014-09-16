@@ -1,10 +1,10 @@
-function New-NuGetPackage{
+function New-NuGetPackages{
 <#
  
 .SYNOPSIS
-    Given the a path to a NuGet spec file will create a new versioned NuGet package.
+    Given a path, will create a new versioned NuGet package for each NuGet spec (.nuspec) file found.
 .DESCRIPTION
-    Given the a path to a NuGet spec file will create a new versioned NuGet package, optionally allowing you to specify a version number and path to the NuGet console executable.
+     Given a path, will create a new versioned NuGet package for each NuGet spec (.nuspec) file found, optionally allowing you to specify a version number and path to the NuGet console executable.
 
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
@@ -15,13 +15,13 @@ function New-NuGetPackage{
 .PARAMETER includeSymbolPackage
 	Optional. If included, instructs the NuGet executable to include the -symbols switch, generating a matching symbols package containing the 'pdb's'. Defaults to $false.
 .EXAMPLE 
-	Import-Module New-NuGetPackage
+	Import-Module New-NuGetPackages
 	Import the module
 .EXAMPLE	
-	Get-Command -Module New-NuGetPackage
+	Get-Command -Module New-NuGetPackages
 	List available functions
 .EXAMPLE
-	New-NuGetPackage -specFilePath 
+	New-NuGetPackages -specFilePath 
 	Execute the module
 #>
 	[cmdletbinding()]
@@ -51,14 +51,12 @@ function New-NuGetPackage{
 					#Set our default value for nuget.exe
 					$nuGetPath = "$basePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
 				}
+				$specFilePaths = Get-AllNuSpecFiles
 				
-				#Our convention, select all '.nuspec' files in the current folder and create the NuGet package for each
-				$specFilePaths = Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.nuspec'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
-
 				if ($specFilePaths -eq $null)
 				{
 					Write-Warning "No NuGet '.nuspec' file found matching the packaging naming convention, exiting without NuGet packaging."
-					Return 0
+					return 0
 				}
 				
 				if ((Test-Path -Path "$basePath\BuildOutput") -eq $True) { Remove-Item -Path "$basePath\BuildOutput" -Force	-Recurse}
@@ -86,3 +84,10 @@ function New-NuGetPackage{
 				}
 		}
 }
+
+function Get-AllNuSpecFiles {
+	#Convention: select all '.nuspec' files in the supplied folder
+	return Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.nuspec'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+}
+
+Export-ModuleMember -Function New-NuGetPackages

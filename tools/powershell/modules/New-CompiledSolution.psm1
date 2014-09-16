@@ -51,8 +51,6 @@ function New-CompiledSolution{
 						#Set our default value for nuget.exe
 						$nuGetPath = "$basePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
 					}
-					
-					Write-Host "Using ""Configuration"" mode $configMode. Modify this by passing in a value for ""$configMode"""
 
 					$solutionFile = Get-FirstSolutionFile
 					
@@ -62,6 +60,8 @@ function New-CompiledSolution{
 						Return 1
 					}
 					
+					Write-Warning "Using ""Configuration"" mode $configMode. Modify this by passing in a value for ""$configMode"""
+										
 					Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
 					
 					Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
