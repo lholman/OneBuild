@@ -25,17 +25,11 @@ function New-CompiledSolution{
 #>
 	[cmdletbinding()]
 		Param(
-			[Parameter(
-				Position = 0,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[string]$msBuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",				
-			[Parameter(
-				Position = 1,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[string]$configMode = "Release",	
-			[Parameter(
-				Position = 2,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[string]$nuGetPath				
 			)			
 	Begin {
@@ -65,7 +59,8 @@ function New-CompiledSolution{
 					Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
 					
 					Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
-				
+					
+					Return 0
 				}
 				catch [Exception] {
 					throw "Error compiling solution file: $solutionFile. `r`n $_.Exception.ToString()"
@@ -79,13 +74,9 @@ function Get-FirstSolutionFile {
 
 function Restore-SolutionNuGetPackages {
 	Param(			
-		[Parameter(
-			Position = 1,
-			Mandatory = $True )]
+		[Parameter(Mandatory = $True )]
 			[string]$solutionFile,	
-		[Parameter(
-			Position = 2,
-			Mandatory = $True )]
+		[Parameter(Mandatory = $True )]
 			[string]$nuGetPath				
 	)	
 	Write-Host "Restoring NuGet packages for ""$solutionFile""."
@@ -94,13 +85,9 @@ function Restore-SolutionNuGetPackages {
 
 function Invoke-MsBuildCompilationForSolution {
 	Param(			
-		[Parameter(
-			Position = 1,
-			Mandatory = $True )]
+		[Parameter(Mandatory = $True )]
 			[string]$solutionFile,	
-		[Parameter(
-			Position = 2,
-			Mandatory = $True )]
+		[Parameter(Mandatory = $True )]
 			[string]$configMode				
 	)
 	Write-Host "Building ""$solutionFile"" in ""$configMode"" mode."

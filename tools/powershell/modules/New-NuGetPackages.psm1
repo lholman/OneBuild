@@ -9,7 +9,7 @@ function New-NuGetPackages{
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
 .PARAMETER versionNumber
-	Optional. The version number to stamp the resultant NuGet package with.
+	Mandatory. The version number to stamp the resultant NuGet package with.
 .PARAMETER nuGetPath
 	Optional. The full path to the nuget.exe console application.  Defaults to 'packages\NuGet.CommandLine.2.7.3\tools\nuget.exe', i.e. the bundled version of NuGet.
 .PARAMETER includeSymbolPackage
@@ -26,17 +26,11 @@ function New-NuGetPackages{
 #>
 	[cmdletbinding()]
 		Param(		
-			[Parameter(
-				Position = 0,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $True )]
 				[string]$versionNumber,
-			[Parameter(
-				Position = 1,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[string]$nuGetPath,
-			[Parameter(
-				Position = 2,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[switch]$includeSymbolPackage					
 			)
 	Begin {
@@ -59,24 +53,27 @@ function New-NuGetPackages{
 					return 0
 				}
 				
-				if ((Test-Path -Path "$basePath\BuildOutput") -eq $True) { Remove-Item -Path "$basePath\BuildOutput" -Force	-Recurse}
-				New-Item -ItemType directory -Path "$basePath\BuildOutput" -force
+				#if ((Test-Path -Path "$basePath\BuildOutput") -eq $False) 
+				#{ 
+				#	New-Item -ItemType directory -Path "$basePath\BuildOutput" -force
+				#}
 					
 				Try 
 				{
 					ForEach ($specFilePath in $specFilePaths)
 					{	
-					
+						#Write-Host "specFilePath: $specFilePath"
 						if ($includeSymbolPackage)
 						{
-							return & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput" -Symbols
+							Invoke-NuGetPackWithSymbols -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber
 						}
 						else
 						{
-							return & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput"	
+							Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber
 						}
-
 					}
+					
+					Return 0
 					
 				}
 				catch [Exception] {
@@ -88,6 +85,31 @@ function New-NuGetPackages{
 function Get-AllNuSpecFiles {
 	#Convention: select all '.nuspec' files in the supplied folder
 	return Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.nuspec'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+}
+
+function Invoke-NuGetPack {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$nuGetPath,
+		[Parameter(Mandatory = $True )]
+			[string]$specFilePath,		
+		[Parameter(Mandatory = $True )]
+			[string]$versionNumber				
+	)
+	& $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput" 
+}
+
+function Invoke-NuGetPackWithSymbols {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$nuGetPath,
+		[Parameter(Mandatory = $True )]
+			[string]$specFilePath,		
+		[Parameter(Mandatory = $True )]
+			[string]$versionNumber				
+	)
+	& $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory "BuildOutput"	-Symbols
+
 }
 
 Export-ModuleMember -Function New-NuGetPackages
