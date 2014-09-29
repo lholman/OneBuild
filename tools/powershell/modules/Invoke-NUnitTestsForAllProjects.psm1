@@ -20,35 +20,30 @@ function Invoke-NUnitTestsForAllProjects{
 	Get-Command -Module Invoke-NUnitTestsForProject
 	List available functions
 .EXAMPLE
-	Invoke-NUnitTestsForProject -basePath "\"
+	Invoke-NUnitTestsForProject
 	Execute the module
 #>
 	[cmdletbinding()]
 		Param(
-			[Parameter(
-				Position = 0,
-				Mandatory = $False )]
-				[string]$basePath,		
-			[Parameter(
-				Position = 1,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
+				[string]
+				$basePath,		
+			[Parameter(Mandatory = $False )]
 				[string]$nUnitPath,
-			[Parameter(
-				Position = 2,
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[string]$searchString = "test"			
 			)
 	Begin {
 			$DebugPreference = "Continue"
 		}	
 	Process {
+				$path = Confirm-Path -basePath $basePath
+				if ($path -eq 1) { return 1}
 				
-				#Set the basePath to the calling scripts path (using Resolve-Path .)
-				$basePath = Resolve-Path .
-				$nUnitPath = "$basePath\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
+				$nUnitPath = "$path\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
 				
 				#Our convention: If it's within any bin folder underneath the current folder, has 'test' in the filename (and in the direcotry name) and is a '.dll' then we'll try and run it with NUnit.
-				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.Name -notlike "*nunit*"} | foreach {$_.FullName}
+				$allTestAssemblyPaths = Get-ChildItem $path -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.Name -notlike "*nunit*"} | foreach {$_.FullName}
 				
 				if ($allTestAssemblyPaths -eq $null)
 				{
@@ -71,10 +66,10 @@ function Invoke-NUnitTestsForAllProjects{
 					}
 				}
 				
-				if (Test-Path "$basePath\TestResult_$($searchString)*.xml")
+				if (Test-Path "$path\TestResult_$($searchString)*.xml")
 				{
-					Write-Warning "Removing all previous test result file(s) matching: $basePath\TestResult*.xml"
-					Remove-Item "$basePath\TestResult_$($searchString)*.xml" -Force -ErrorAction SilentlyContinue
+					Write-Warning "Removing all previous test result file(s) matching: $path\TestResult*.xml"
+					Remove-Item "$path\TestResult_$($searchString)*.xml" -Force -ErrorAction SilentlyContinue
 				}
 				
 				$i = 1	
@@ -101,3 +96,17 @@ function Invoke-NUnitTestsForAllProjects{
 				
 		}
 }
+
+function Confirm-Path {
+	Param(			
+			[Parameter(
+				Mandatory = $False )]
+				[string]$basePath			
+		)	
+	Import-Module "$PSScriptRoot\Get-Path.psm1"
+	$path = Get-Path -basePath $basePath
+	Remove-Module Get-Path
+	return $path
+}
+
+Export-ModuleMember -Function Invoke-NUnitTestsForAllProjects

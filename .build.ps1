@@ -177,13 +177,14 @@ task Invoke-HardcoreClean {
 #*================================================================================================
 task Invoke-OneBuildUnitTests {
 	
+	#.\packages\invoke-build.2.9.12\tools\Invoke-Build.ps1 Invoke-OneBuildUnitTests .\.build.ps1
+	
 	$pesterPath = Get-ChildItem "$basePath\packages" | Where-Object {$_.Name -like 'pester*'} | Where-Object {$_.PSIsContainer -eq $True} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
 	
 	assert ($pesterPath -ne $Null) "No pester NuGet package found under $basePath\packages, maybe try restoring all NuGet packages?"
 
 	Import-Module "$pesterPath\tools\Pester.psm1"
 	$result
-	Write-Host "Base path again: $basePath"
 	try {
 		$result = Invoke-Pester -Path "$basePath\tests" -PassThru
 	}

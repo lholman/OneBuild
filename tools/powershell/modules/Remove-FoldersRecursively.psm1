@@ -36,13 +36,9 @@ function Remove-FoldersRecursively{
 			$DebugPreference = "Continue"
 		}	
 	Process {
-				
 				$path = Confirm-Path -basePath $basePath
-
-				if ($path -eq 1)
-				{
-					return 1
-				}
+				if ($path -eq 1) { return 1}
+				
 				Write-Host "Searching for paths to delete, recursively from: $path"
 				
 				Try 
