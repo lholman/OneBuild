@@ -12,7 +12,6 @@ Describe "Get-Path" {
 	Context "When module is invoked with NO basePath parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
-		#Calling script is the root of the OneBuild folder, where Invoke-Build invokes pester
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""

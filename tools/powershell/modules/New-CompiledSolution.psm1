@@ -13,6 +13,8 @@ function New-CompiledSolution{
 	Optional. The build Configuration to be passed to msbuild during compilation. Examples include 'Debug' or 'Release'.  Defaults to 'Release' 'C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe'.	
 .PARAMETER nuGetPath
 	Optional. The full path to the nuget.exe console application.  Defaults to 'packages\NuGet.CommandLine.2.7.3\tools\nuget.exe', i.e. the bundled version of NuGet.	
+.PARAMETER basePath
+	Optional. The path to the root parent folder to search for Visual Studio Solution (.sln) files in.  Defaults to the calling scripts path.		
 .EXAMPLE 
 	Import-Module New-CompiledSolution
 	Import the module
@@ -26,11 +28,17 @@ function New-CompiledSolution{
 	[cmdletbinding()]
 		Param(
 			[Parameter(Mandatory = $False )]
-				[string]$msBuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",				
+				[string]
+				$msBuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",	
 			[Parameter(Mandatory = $False )]
-				[string]$configMode = "Release",	
-			[Parameter(Mandatory = $False )]
-				[string]$nuGetPath				
+				[string]
+				$configMode = "Release",	
+			[Parameter(Mandatory = $False )]	
+				[string]
+				$nuGetPath,
+			[Parameter(Mandatory = $False)]
+				[string]
+				$basePath = ""					
 			)			
 	Begin {
 			$DebugPreference = "Continue"
@@ -39,11 +47,15 @@ function New-CompiledSolution{
 				Try 
 				{
 					#Set the basePath to the calling scripts path (using Resolve-Path .)
-					$basePath = Resolve-Path .
+					#$basePath = Resolve-Path .
+					$path = Confirm-Path -basePath $basePath
+					if ($path -eq 1) { return 1}
+				
 					if ($nuGetPath -eq "")
 					{
 						#Set our default value for nuget.exe
-						$nuGetPath = "$basePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+						$callingScriptPath = Resolve-Path .
+						$nuGetPath = "$callingScriptPath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
 					}
 
 					$solutionFile = Get-FirstSolutionFile
@@ -54,11 +66,18 @@ function New-CompiledSolution{
 						Return 1
 					}
 					
-					Write-Warning "Using ""Configuration"" mode $configMode. Modify this by passing in a value for ""$configMode"""
+					Write-Warning "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
 										
 					Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
 					
-					Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
+					$result = ""
+					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
+					
+					if ($result) 
+					{
+						Write-Error "Whilst executing MsBuild for solution file $solutionFile, MsBuild.exe exited with error message: Root element is missing: $result"
+						Return 1
+					}
 					
 					Return 0
 				}
@@ -67,6 +86,18 @@ function New-CompiledSolution{
 				}
 		}
 }
+function Confirm-Path {
+	Param(			
+			[Parameter(
+				Mandatory = $False )]
+				[string]$basePath			
+		)	
+	Import-Module "$PSScriptRoot\Get-Path.psm1"
+	$path = Get-Path -basePath $basePath
+	Remove-Module Get-Path
+	return $path
+}
+
 function Get-FirstSolutionFile {
 	#Convention: Get the first solution file we find (ordered alphabetically) in the current folder. 
 	return Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.sln'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
@@ -80,7 +111,14 @@ function Restore-SolutionNuGetPackages {
 			[string]$nuGetPath				
 	)	
 	Write-Host "Restoring NuGet packages for ""$solutionFile""."
-	& $nugetPath restore $solutionFile
+	$output = & $nugetPath restore $solutionFile 2>&1 
+	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
+	
+	if ($err)
+	{
+		Write-Host $output
+		Return $err
+	}
 }
 
 function Invoke-MsBuildCompilationForSolution {
@@ -90,8 +128,17 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$configMode				
 	)
-	Write-Host "Building ""$solutionFile"" in ""$configMode"" mode."
-	& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m
+	Write-Warning "Building '$($solutionFile)' in '$($configMode)' mode"
+	$output = & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1 
+	$err = $output | ? {$_.GetType().Name -eq "ErrorRecord"}
+	
+	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
+	Write-Host "output $output"
+	Write-Host "err $err"
+	if ($err)
+	{
+		Return $err
+	}
 
 }
 

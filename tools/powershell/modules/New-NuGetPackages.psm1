@@ -132,13 +132,14 @@ function Invoke-NuGetPack {
 		[Parameter(Mandatory = $True )]
 			[string]$path				
 	)
-	
 	$output = & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory $path\BuildOutput 2>&1 
 	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
+
+	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 	
+	Write-Host $output
 	
 	if ($err)
 	{
-		Write-Host $output
 		Return $err
 	}
 }
@@ -156,10 +157,12 @@ function Invoke-NuGetPackWithSymbols {
 	)
 	$output = & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory $path\BuildOutput -Symbols 2>&1 
 	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
+
+	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
+	Write-Host $output
 	
 	if ($err)
 	{
-		Write-Host $output
 		Return $err
 	}
 }
