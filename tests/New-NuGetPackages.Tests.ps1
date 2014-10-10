@@ -110,7 +110,7 @@ Describe "New-NuGetPackages_1" {
 		
 		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0" -basePath $testBasePath
+			$result = New-NuGetPackages -versionNumber "1.0.0" -path $testBasePath
 		}
 		catch {
 			throw

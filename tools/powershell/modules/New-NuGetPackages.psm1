@@ -14,8 +14,8 @@ function New-NuGetPackages{
 	Optional. The full path to the nuget.exe console application.  Defaults to 'packages\NuGet.CommandLine.2.7.3\tools\nuget.exe', i.e. the bundled version of NuGet.
 .PARAMETER includeSymbolsPackage
 	Optional. If included, instructs the NuGet executable to include the -symbols switch, generating a matching symbols package containing the 'pdb's'. Defaults to $false.
-.PARAMETER basePath
-	Optional. The path to the root parent folder to search for NuGet spec (.nuspec) files in.  Defaults to the calling scripts path.	
+.PARAMETER path
+	Optional. The path to the parent folder to search for NuGet spec (.nuspec) files in.  Defaults to the calling scripts path.	
 .EXAMPLE 
 	Import-Module New-NuGetPackages
 	Import the module
@@ -39,15 +39,15 @@ function New-NuGetPackages{
 				$includeSymbolsPackage,
 			[Parameter(Mandatory = $False)]
 				[string]
-				$basePath = ""			
+				$path = ""			
 			)
 	Begin {
 			$DebugPreference = "Continue"
 		}	
 	Process {
 
-				$path = Confirm-Path -basePath $basePath
-				if ($path -eq 1) { return 1}
+				$basePath = Confirm-Path -path $path
+				if ($basePath -eq 1) { return 1}
 				
 				if ($nuGetPath -eq "")
 				{
@@ -55,7 +55,7 @@ function New-NuGetPackages{
 					$callingScriptPath = Resolve-Path .
 					$nuGetPath = "$callingScriptPath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
 				}
-				$specFilePaths = Get-AllNuSpecFiles -path $path
+				$specFilePaths = Get-AllNuSpecFiles -path $basePath
 				
 				if ($specFilePaths -eq $null)
 				{
@@ -63,9 +63,9 @@ function New-NuGetPackages{
 					return 0
 				}
 				
-				if ((Test-Path -Path "$path\BuildOutput") -eq $False) 
+				if ((Test-Path -Path "$basePath\BuildOutput") -eq $False) 
 				{
-					$supressOutput = New-Item -ItemType directory -Path "$path\BuildOutput" -force
+					$supressOutput = New-Item -ItemType directory -Path "$basePath\BuildOutput" -force
 				}
 					
 				Try 
@@ -76,11 +76,11 @@ function New-NuGetPackages{
 					{	
 						if ($includeSymbolsPackage)
 						{
-							$result = Invoke-NuGetPackWithSymbols -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $path
+							$result = Invoke-NuGetPackWithSymbols -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
 						}
 						else
 						{
-							$result = Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $path
+							$result = Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
 							
 						}
 						
@@ -104,12 +104,12 @@ function Confirm-Path {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
-				[string]$basePath			
+				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
-	$path = Get-Path -path $basePath
+	$basePath = Get-Path -path $path
 	Remove-Module Get-Path
-	return $path
+	return $basePath
 }
 
 function Get-AllNuSpecFiles {
