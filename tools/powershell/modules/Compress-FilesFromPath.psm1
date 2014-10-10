@@ -43,11 +43,15 @@ function Compress-FilesFromPath{
 				if ($basePath -eq 1) { return 1}
 				
 				Write-Host "Searching for files to compress within path: $basePath"
+				if ((Get-ChildItem $basePath).Count -eq 0)
+				{
+					Write-Error "No files found with the path: $basePath, exiting without generating archive file."
+					return 1
+				}
 				
 				Try 
 				{
-
-					
+					Compress-Files
 					return 0
 				}
 				

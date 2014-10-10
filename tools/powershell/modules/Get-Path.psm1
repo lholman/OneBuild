@@ -7,7 +7,7 @@ function Get-Path{
     Given a path will confirm it exists, returning it if it does and returning the calling scripts path if it does NOT. 
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
-.PARAMETER basePath
+.PARAMETER path
 	Optional. The path confirm. Defaults to the calling scripts path.
 .EXAMPLE 
 	Import-Module Get-Path
@@ -23,25 +23,25 @@ function Get-Path{
 		Param(
 			[Parameter(Mandatory = $False)]
 				[string]
-				$basePath = ""
+				$path = ""
 			)
 	Begin {
 			$DebugPreference = "Continue"
 		}	
 	Process {
 
-				if ($basePath -eq "")
+				if ($path -eq "")
 				{
-					#Set the basePath to the calling scripts path (using Resolve-Path .)
+					#Set the path to the calling scripts path (using Resolve-Path .)
 					return Resolve-Path .
 				}
-				if (Test-Path $basePath) 
+				if (Test-Path $path) 
 				{
-					#Write-Host "return basePath: $basePath"
-					return $basePath
+					#Write-Host "return path: $path"
+					return $path
 				}
 				
-				Write-Error "Supplied basePath: $basePath does not exist."
+				Write-Error "Supplied path: $path does not exist."
 				return 1
 		}
 }

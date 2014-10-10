@@ -75,8 +75,45 @@ Describe "Compress-FilesFromPath" {
 	}		
 }
 
-Describe "Compress-FilesFromPath" {			
-	Context "When basePath parameter contains one file to compress" {
+Describe "Compress-FilesFromPath" {	
+	Context "When path parameter contains no files to compress" {
+		
+		Import-Module "$baseModulePath\$sut"
+
+		#New-Item -Name "testfile.txt" -Path $TestDrive -ItemType File
+		$testBasePath = $TestDrive
+		
+		Mock -ModuleName $sut Write-Host {} -Verifiable -ParameterFilter {
+            $Object -eq "Searching for files to compress within path: $testBasePath"
+        }							
+		
+		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
+            $Message -eq "No files found with the path: $testBasePath, exiting without generating archive file."
+        }							
+		
+		$result = ""
+		try {
+			$result = Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
+		}
+		catch {
+			$result = "$_.Exception.Message"
+		}
+		finally {
+			Remove-Module $sut
+		}
+
+		It "Writes a descriptive message and error" {
+			Assert-VerifiableMocks
+		}
+
+        It "Exits module with code 1" {
+            $result | Should Be 1
+        }	
+	}
+}
+
+Describe "Compress-FilesFromPath" {		
+	Context "When path parameter contains one file to compress" {
 		
 		Import-Module "$baseModulePath\$sut"
 
@@ -85,7 +122,7 @@ Describe "Compress-FilesFromPath" {
 
 		Mock -ModuleName $sut Write-Host {} -Verifiable -ParameterFilter {
             $Object -eq "Searching for files to compress within path: $testBasePath"
-        }					
+        }							
 		
 		Mock -ModuleName $sut Compress-Files { }
 		
@@ -107,7 +144,6 @@ Describe "Compress-FilesFromPath" {
 		It "Should call Compress-Files to zip the files within the supplied path" {
             Assert-MockCalled Compress-Files -ModuleName $sut -Times 1
         }
-		
 		
         It "Exits module with code 0" {
             $result | Should Be 0

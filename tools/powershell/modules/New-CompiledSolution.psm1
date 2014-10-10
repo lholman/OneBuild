@@ -93,7 +93,7 @@ function Confirm-Path {
 				[string]$basePath			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
-	$path = Get-Path -basePath $basePath
+	$path = Get-Path -path $basePath
 	Remove-Module Get-Path
 	return $path
 }

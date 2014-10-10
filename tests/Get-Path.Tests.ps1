@@ -9,7 +9,7 @@ if ($module -ne $null)
 }
 
 Describe "Get-Path" {		
-	Context "When module is invoked with NO basePath parameter" {
+	Context "When module is invoked with NO path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
@@ -30,7 +30,7 @@ Describe "Get-Path" {
         }		
 	}
 	
-	Context "When module is invoked with a path (-basePath parameter) that DOES exist" {
+	Context "When module is invoked with a path (-path parameter) that DOES exist" {
 		
 		Import-Module "$baseModulePath\$sut"
 		#Here we get the TestDrive using pesters $TestDrive variable which holds the full file system location to the temporary PSDrive. 
@@ -38,7 +38,7 @@ Describe "Get-Path" {
 
 		$result = ""
 		try {
-			$result = Get-Path -basePath $testBasePath
+			$result = Get-Path -path $testBasePath
 		}
 		catch {
 			throw
@@ -52,17 +52,17 @@ Describe "Get-Path" {
         }		
 	}
 
-	Context "When module is invoked with a path (-basePath parameter) that does NOT exist" {
+	Context "When module is invoked with a path (-path parameter) that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
 		$testBasePath = "$TestDrive\NonExistentPath\"
 		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
-            $Message -eq "Supplied basePath: $testBasePath does not exist."
+            $Message -eq "Supplied path: $testBasePath does not exist."
         }
 				
 		$result = ""
 		try {
-			$result = Get-Path -basePath $testBasePath 
+			$result = Get-Path -path $testBasePath 
 		}
 		catch {
 			throw
