@@ -7,10 +7,10 @@ function Remove-FoldersRecursively{
     Recursively removes (deletes) all folders from a supplied base folder path  that match a supplied array of include paths. 
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
-.PARAMETER basePath
+.PARAMETER path
 	Optional. The path to the root parent folder to execute the recursive remove from.  Defaults to the calling scripts path.
 .PARAMETER deleteIncludePaths
-	Optional. A string array separated list of folder names to remove recursively, any folders matching the names of the items in the list found below the basePath will be removed.
+	Optional. A string array separated list of folder names to remove recursively, any folders matching the names of the items in the list found below the path will be removed.
 .EXAMPLE 
 	Import-Module Remove-FoldersRecursively
 	Import the module
@@ -25,7 +25,7 @@ function Remove-FoldersRecursively{
 		Param(
 			[Parameter(Mandatory = $False)]
 				[string]
-				$basePath = "",
+				$path = "",
 			[Parameter(Mandatory = $True,
 						HelpMessage="Please supply a value for deleteIncludePaths")]
 				[ValidateNotNullOrEmpty()]
@@ -36,15 +36,15 @@ function Remove-FoldersRecursively{
 			$DebugPreference = "Continue"
 		}	
 	Process {
-				$path = Confirm-Path -basePath $basePath
-				if ($path -eq 1) { return 1}
+				$basePath = Confirm-Path -path $path
+				if ($basePath -eq 1) { return 1}
 				
-				Write-Host "Searching for paths to delete, recursively from: $path"
+				Write-Host "Searching for paths to delete, recursively from: $basePath"
 				
 				Try 
 				{
 
-					Get-ChildItem -Path $path -Include $deleteIncludePaths -Recurse | 
+					Get-ChildItem -Path $basePath -Include $deleteIncludePaths -Recurse | 
 						#? { $_.psiscontainer -and $_.fullname -notmatch 'packages' } | #Uncomment to exclude a particular root folder
 						foreach ($_) { 
 							Write-Host "Cleaning: $_"
@@ -55,7 +55,7 @@ function Remove-FoldersRecursively{
 				}
 				
 				catch [Exception] {
-					throw "Error removing folders for supplied deleteIncludePaths: $deleteIncludePaths under path: $path `r`n $_.Exception.ToString()"
+					throw "Error removing folders for supplied deleteIncludePaths: $deleteIncludePaths under path: $basePath `r`n $_.Exception.ToString()"
 					return 1
 				}
 		}
@@ -65,12 +65,12 @@ function Confirm-Path {
 	Param(			
 			[Parameter(
 				Mandatory = $True )]
-				[string]$basePath			
+				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
-	$path = Get-Path -path $basePath
+	$basePath = Get-Path -path $path
 	Remove-Module Get-Path
-	return $path
+	return $basePath
 }
 
 Export-ModuleMember -Function Remove-FoldersRecursively

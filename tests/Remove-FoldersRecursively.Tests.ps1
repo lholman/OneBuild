@@ -36,7 +36,7 @@ Describe "Remove-FoldersRecursively_1" {
 }
 
 Describe "Remove-FoldersRecursively_2" {	
-	Context "When module is invoked with a basePath that does NOT exist" {
+	Context "When module is invoked with a path that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
 		Mock -ModuleName $sut Confirm-Path { return 1 }
@@ -44,7 +44,7 @@ Describe "Remove-FoldersRecursively_2" {
 				
 		$result = ""
 		try {
-			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePaths @("bin")
+			$result = Remove-FoldersRecursively -path $testBasePath -deleteIncludePaths @("bin")
 		}
 		catch {
 			throw
@@ -75,7 +75,7 @@ Describe "Remove-FoldersRecursively_3" {
         }			
 		$result = ""
 		try {				
-			$result = Remove-FoldersRecursively -basePath $testBasePath -deleteIncludePaths @("bin")
+			$result = Remove-FoldersRecursively -path $testBasePath -deleteIncludePaths @("bin")
 		}
 		catch {
 			throw
