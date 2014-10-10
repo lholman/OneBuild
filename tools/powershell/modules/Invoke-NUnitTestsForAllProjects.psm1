@@ -4,10 +4,10 @@ function Invoke-NUnitTestsForAllProjects{
 .SYNOPSIS
     Executes all NUnit tests for compiled .NET assemblies matching a defined naming convention.
 .DESCRIPTION
-    Executes all NUnit tests for compiled .NET assemblies matching a defined naming convention, optionally allowing you to specify a basePath to recursively find assemblies within and the path to the NUnit console executable.
+    Executes all NUnit tests for compiled .NET assemblies matching a defined naming convention, optionally allowing you to specify a path to recursively find assemblies within and the path to the NUnit console executable.
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
-.PARAMETER basePath
+.PARAMETER path
 	Optional. The root path to search recursively for matching .NET test assemblies.  Defaults to the calling scripts path.	
 .PARAMETER nUnitPath
 	Optional. The full path to nunit-console.exe.  Defaults to 'packages\NUnit.Runners.2.6.3\tools\nunit-console.exe', i.e. the bundled version of NUnit.
@@ -27,23 +27,25 @@ function Invoke-NUnitTestsForAllProjects{
 		Param(
 			[Parameter(Mandatory = $False )]
 				[string]
-				$basePath,		
+				$path,		
 			[Parameter(Mandatory = $False )]
-				[string]$nUnitPath,
+				[string]
+				$nUnitPath,
 			[Parameter(Mandatory = $False )]
-				[string]$searchString = "test"			
+				[string]
+				$searchString = "test"			
 			)
 	Begin {
 			$DebugPreference = "Continue"
 		}	
 	Process {
-				$path = Confirm-Path -basePath $basePath
-				if ($path -eq 1) { return 1}
+				$basePath = Confirm-Path -path $path
+				if ($basePath -eq 1) { return 1}
 				
-				$nUnitPath = "$path\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
+				$nUnitPath = "$basePath\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
 				
 				#Our convention: If it's within any bin folder underneath the current folder, has 'test' in the filename (and in the direcotry name) and is a '.dll' then we'll try and run it with NUnit.
-				$allTestAssemblyPaths = Get-ChildItem $path -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.Name -notlike "*nunit*"} | foreach {$_.FullName}
+				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.Name -notlike "*nunit*"} | foreach {$_.FullName}
 				
 				if ($allTestAssemblyPaths -eq $null)
 				{
@@ -66,10 +68,10 @@ function Invoke-NUnitTestsForAllProjects{
 					}
 				}
 				
-				if (Test-Path "$path\TestResult_$($searchString)*.xml")
+				if (Test-Path "$basePath\TestResult_$($searchString)*.xml")
 				{
-					Write-Warning "Removing all previous test result file(s) matching: $path\TestResult*.xml"
-					Remove-Item "$path\TestResult_$($searchString)*.xml" -Force -ErrorAction SilentlyContinue
+					Write-Warning "Removing all previous test result file(s) matching: $basePath\TestResult*.xml"
+					Remove-Item "$basePath\TestResult_$($searchString)*.xml" -Force -ErrorAction SilentlyContinue
 				}
 				
 				$i = 1	
@@ -101,12 +103,12 @@ function Confirm-Path {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
-				[string]$basePath			
+				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
-	$path = Get-Path -path $basePath
+	$basePath = Get-Path -path $path
 	Remove-Module Get-Path
-	return $path
+	return $basePath
 }
 
 Export-ModuleMember -Function Invoke-NUnitTestsForAllProjects

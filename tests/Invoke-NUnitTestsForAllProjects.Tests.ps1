@@ -40,7 +40,7 @@ Describe "Invoke-NUnitTestsForAllProjects" {
 	}
 #}
 #Describe "Invoke-NUnitTestsForAllProjects" {
-	Context "When module is invoked with a basePath that does NOT exist" {
+	Context "When module is invoked with a path that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
 		Mock -ModuleName $sut Confirm-Path { return 1 }
@@ -48,7 +48,7 @@ Describe "Invoke-NUnitTestsForAllProjects" {
 	
 		$result = ""
 		try {
-			$result = Invoke-NUnitTestsForAllProjects -basePath $testBasePath
+			$result = Invoke-NUnitTestsForAllProjects -path $testBasePath
 		}
 		catch {
 			throw
