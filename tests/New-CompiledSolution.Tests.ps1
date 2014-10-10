@@ -92,7 +92,7 @@ Describe "New-CompiledSolution_2" {
 		
 		$result = 0
 		try {
-			$result = New-CompiledSolution -basePath $testBasePath
+			$result = New-CompiledSolution -path $testBasePath
 		}
 		catch {
 			throw

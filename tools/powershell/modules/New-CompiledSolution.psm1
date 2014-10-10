@@ -13,8 +13,8 @@ function New-CompiledSolution{
 	Optional. The build Configuration to be passed to msbuild during compilation. Examples include 'Debug' or 'Release'.  Defaults to 'Release' 'C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe'.	
 .PARAMETER nuGetPath
 	Optional. The full path to the nuget.exe console application.  Defaults to 'packages\NuGet.CommandLine.2.7.3\tools\nuget.exe', i.e. the bundled version of NuGet.	
-.PARAMETER basePath
-	Optional. The path to the root parent folder to search for Visual Studio Solution (.sln) files in.  Defaults to the calling scripts path.		
+.PARAMETER path
+	Optional. The full path to the parent folder to look for Visual Studio Solution (.sln) files in.  Defaults to the calling scripts path.		
 .EXAMPLE 
 	Import-Module New-CompiledSolution
 	Import the module
@@ -38,7 +38,7 @@ function New-CompiledSolution{
 				$nuGetPath,
 			[Parameter(Mandatory = $False)]
 				[string]
-				$basePath = ""					
+				$path = ""					
 			)			
 	Begin {
 			$DebugPreference = "Continue"
@@ -46,10 +46,10 @@ function New-CompiledSolution{
 	Process {
 				Try 
 				{
-					#Set the basePath to the calling scripts path (using Resolve-Path .)
-					#$basePath = Resolve-Path .
-					$path = Confirm-Path -basePath $basePath
-					if ($path -eq 1) { return 1}
+					#Set the path to the calling scripts path (using Resolve-Path .)
+					#$path = Resolve-Path .
+					$basePath = Confirm-Path -path $path
+					if ($basePath -eq 1) { return 1}
 				
 					if ($nuGetPath -eq "")
 					{
@@ -90,17 +90,17 @@ function Confirm-Path {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
-				[string]$basePath			
+				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
-	$path = Get-Path -path $basePath
+	$basePath = Get-Path -path $path
 	Remove-Module Get-Path
-	return $path
+	return $basePath
 }
 
 function Get-FirstSolutionFile {
 	#Convention: Get the first solution file we find (ordered alphabetically) in the current folder. 
-	return Get-ChildItem $basePath | Where-Object {$_.Extension -eq '.sln'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+	return Get-ChildItem $path | Where-Object {$_.Extension -eq '.sln'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
 }
 
 function Restore-SolutionNuGetPackages {
