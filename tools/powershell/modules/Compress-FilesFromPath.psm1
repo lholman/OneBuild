@@ -57,11 +57,11 @@ function Compress-FilesFromPath{
 					$exitCode = Compress-Files -path $path -archiveName $archiveName -sevenZipPath $sevenZipPath
 					if ($exitCode -eq 1) 
 					{
-						Write-Error "Whilst generating 7Zip archive on path $path, 7za.exe exited with a non-terminating exit code: $exitCode"
+						Write-Error "Whilst generating 7Zip archive on path $path, 7za.exe exited with a non-terminating exit code: $exitCode. Meaning from 7-Zip: Warning (Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed"
 					}
 					elseif ($exitCode -gt 1)
 					{
-						throw "Whilst generating 7Zip archive on path $path, 7za.exe exited with a terminating exit code: $exitCode"
+						throw "Whilst generating 7Zip archive on path $path, 7za.exe exited with a terminating exit code: $exitCode. Meaning from 7-Zip: Fatal error"
 					}
 				}
 				
@@ -80,9 +80,17 @@ function Confirm-Path {
 				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
-	$path = Get-Path -path $path
-	Remove-Module Get-Path
-	return $path
+	Try {
+		$path = Get-Path -path $path
+		return $path
+	}
+	Catch [Exception] {
+		throw
+	}
+	Finally {
+		Remove-Module Get-Path
+	}
+	
 }
 
 function Confirm-FilesInPath {

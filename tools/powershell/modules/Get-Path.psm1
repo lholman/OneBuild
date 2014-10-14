@@ -41,8 +41,7 @@ function Get-Path{
 					return $path
 				}
 				
-				Write-Error "Supplied path: $path does not exist."
-				return 1
+				throw "Supplied path: $path does not exist"
 		}
 }
 

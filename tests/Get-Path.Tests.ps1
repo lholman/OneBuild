@@ -47,7 +47,7 @@ Describe "Get-Path" {
 			Remove-Module $sut
 		}
 		
-		It "Should set the path to the calling scripts path" {
+		It "Should set the path to the supplied path" {
             $result | Should Be "$testBasePath"
         }		
 	}
@@ -56,27 +56,21 @@ Describe "Get-Path" {
 
 		Import-Module "$baseModulePath\$sut"	
 		$testBasePath = "$TestDrive\NonExistentPath\"
-		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
-            $Message -eq "Supplied path: $testBasePath does not exist."
-        }
-				
+		
+		$error.Clear()		
 		$result = ""
 		try {
-			$result = Get-Path -path $testBasePath 
+			Get-Path -path $testBasePath 
 		}
 		catch {
-			throw
+			$result = $_
 		}
 		finally {
 			Remove-Module $sut
 		}
-		
-		It "Should write a descriptive error" {
-			Assert-VerifiableMocks
-		}
 
-        It "Should exit the module with code 1" {
-            $result | Should Be 1
+		It "Exits the module with a terminating error" {
+			$result | Should Be "Supplied path: $testBasePath does not exist" 
         }		
 	}	
 }

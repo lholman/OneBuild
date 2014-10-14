@@ -124,7 +124,7 @@ Describe "Compress-FilesFromPath" {
 		$error.Clear() #We clear the PowerShell $error variable here so we can asserts its value later
 		$result = $null
 		try {
-			$result = Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
+			Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
 		}
 		catch {
 			$result = "$_.Exception"
@@ -164,9 +164,9 @@ Describe "Compress-FilesFromPath" {
         }		
 		
 		$error.Clear() #We clear the PowerShell $error variable here so we can asserts its value later
-		$result = ""
+		$result = $null
 		try {
-			$result = Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
+			Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
 		}
 		catch {
 			$result = "$_"
@@ -205,7 +205,7 @@ Describe "Compress-FilesFromPath non-terminating error" {
 		$error.Clear()
 		$result = ""
 		try {
-			$result = Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
+			Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
 		}
 		catch {
 			$result = "$_"
@@ -221,7 +221,7 @@ Describe "Compress-FilesFromPath non-terminating error" {
             Assert-MockCalled Confirm-FilesInPath -ModuleName $sut -Times 1
         }	
         It "Exits the module with a non-terminating error" {
-			$error[0].Exception | Should Be "Microsoft.PowerShell.Commands.WriteErrorException: Whilst generating 7Zip archive on path $testBasePath, 7za.exe exited with a non-terminating exit code: 1"
+			$error[0].Exception | Should Be "Microsoft.PowerShell.Commands.WriteErrorException: Whilst generating 7Zip archive on path $testBasePath, 7za.exe exited with a non-terminating exit code: 1. Meaning from 7-Zip: Warning (Non fatal error(s)). For example, one or more files were locked by some other application, so they were not compressed"
 			$error.Count | Should Be 1
 			#So as not to show the Write-Error in the test execution we could mock Test-Error and make an assumption $error is populated correctly, seeing as it's not really what we're attempting to test. The above is more implementation that should be used within the main .build.ps1 Invoke-Build script.
         }		
@@ -242,7 +242,7 @@ Describe "Compress-FilesFromPath terminating error" {
 		$error.Clear()
 		$result = ""
 		try {
-			$result = Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
+			Compress-FilesFromPath -path $testBasePath -archiveName "myarchive"
 		}
 		catch {
 			$result = "$_"
@@ -258,7 +258,7 @@ Describe "Compress-FilesFromPath terminating error" {
             Assert-MockCalled Confirm-FilesInPath -ModuleName $sut -Times 1
 		}
         It "Exits the module with a terminating error" {
-			$result | Should Be "Whilst generating 7Zip archive on path $testBasePath, 7za.exe exited with a terminating exit code: 2" 
+			$result | Should Be "Whilst generating 7Zip archive on path $testBasePath, 7za.exe exited with a terminating exit code: 2. Meaning from 7-Zip: Fatal error" 
         }		
 	}	
 }
