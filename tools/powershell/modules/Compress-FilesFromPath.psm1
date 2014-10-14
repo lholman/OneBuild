@@ -2,15 +2,17 @@ function Compress-FilesFromPath{
 <#
  
 .SYNOPSIS
-    Compresses (archives/zips) all files within a supplied base folder path in to an archive of a specified name.  
+    Recursively compresses (archives/zips) all files and folders from a supplied folder path in to an archive of a specified name.  
 .DESCRIPTION
-    Recursively compresses (archives/zips) all files within a supplied base folder path in to an archive of the specified name.  
+    Recursively compresses (archives/zips) all files and folders from a supplied folder path in to an archive of a specified name, optionally allowing the 7Zip executable path to be specified. 
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
 .PARAMETER path
 	Mandatory. The full path to the root parent folder to compress all files within.  
 .PARAMETER archiveName
 	Mandatory. A string representing the (extensionless) target archive file name.
+.PARAMETER sevenZipPath
+	Optional. The full path to the 7za.exe console application.  Defaults to 'packages\7zip.commandline.9.20.0.20130618\tools\7za.exe', i.e. the bundled version of 7Zip.	
 .EXAMPLE 
 	Import-Module Compress-FilesFromPath
 	Import the module
@@ -33,32 +35,41 @@ function Compress-FilesFromPath{
 				[ValidateNotNullOrEmpty()]
 				[ValidateScript({$_ -notlike "*.*"})]
 				[string]
-				$archiveName
+				$archiveName,
+			[Parameter(Mandatory = $False )]
+				[string]
+				$sevenZipPath				
 			)
 	Begin {
 			$DebugPreference = "Continue"
 		}	
 	Process {
 				$basePath = Confirm-Path -path $path
-				if ($basePath -eq 1) { return 1}
-				
-				Write-Host "Searching for files to compress within path: $basePath"
-				if ((Get-ChildItem $basePath).Count -eq 0)
+						
+				$filesExist = Confirm-FilesInPath -path $basePath
+				if (!$filesExist)
 				{
-					Write-Error "No files found with the path: $basePath, exiting without generating archive file."
-					return 1
+					throw "No files found within the path: $basePath, exiting without generating archive file."
 				}
 				
 				Try 
 				{
-					Compress-Files
-					return 0
+					$exitCode = Compress-Files -path $path -archiveName $archiveName -sevenZipPath $sevenZipPath
+					if ($exitCode -eq 1) 
+					{
+						Write-Error "Whilst generating 7Zip archive on path $path, 7za.exe exited with a non-terminating exit code: $exitCode"
+					}
+					elseif ($exitCode -gt 1)
+					{
+						throw "Whilst generating 7Zip archive on path $path, 7za.exe exited with a terminating exit code: $exitCode"
+					}
 				}
 				
 				catch [Exception] {
-					throw "Error compressing files within the supplied path: $basePath `r`n $_.Exception.ToString()"
-					return 1
+					throw
 				}
+				
+				return
 		}
 }
 
@@ -74,8 +85,44 @@ function Confirm-Path {
 	return $path
 }
 
-function Compress-Files {
+function Confirm-FilesInPath {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$path				
+	)
+	Write-Host "Searching for files to compress within path: $path"
+	$files = Get-ChildItem $path | Where {! $_.PSIContainer } | foreach {$_.FullName} | Select-Object
+	if ($files -ne $Null)
+	{
+		return $True
+	}
+	return $False
+}
 
+function Compress-Files {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$path,
+		[Parameter(Mandatory = $True)]
+			[string]
+			$archiveName,			
+		[Parameter(Mandatory = $False )]
+			[string]
+			$sevenZipPath			
+	)
+	Write-Host "Compressing all folder(s)/file(s) recursively from path: $path in to archive: $archiveName.zip"
+	
+	if ($sevenZipPath -eq "")
+	{
+		$callingScriptPath = Resolve-Path .
+		$sevenZipPath = "$callingScriptPath\packages\7zip.commandline.9.20.0.20130618\tools\7za.exe"
+	}
+	$output = & $sevenZipPath a "$archiveName.zip" $path\ 2>&1 
+	
+	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
+	Write-Host $output
+	
+	return $LASTEXITCODE
 }
 
 Export-ModuleMember -Function Compress-FilesFromPath

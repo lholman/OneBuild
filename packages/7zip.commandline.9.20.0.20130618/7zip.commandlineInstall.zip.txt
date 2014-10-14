@@ -1,0 +1,4 @@
+C:\chocolatey\lib\7zip.commandline.9.20.0.20130618\tools\7-zip.chm
+C:\chocolatey\lib\7zip.commandline.9.20.0.20130618\tools\7za.exe
+C:\chocolatey\lib\7zip.commandline.9.20.0.20130618\tools\license.txt
+C:\chocolatey\lib\7zip.commandline.9.20.0.20130618\tools\readme.txt
