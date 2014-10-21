@@ -47,28 +47,21 @@ Describe "New-CompiledSolution" {
 		
 		Import-Module "$baseModulePath\$sut"
 		Mock -ModuleName $sut Get-FirstSolutionFile { return $null }
-		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
-            $Message -eq "No solution (*.sln) file found to compile."
-        }
 		
-		$result = 0
+		$result = ""
 		try {
 			$result = New-CompiledSolution
 		}
 		catch {
-			throw
+			$result = "$_."
 		}
 		finally {
 			Remove-Module $sut
 		}
 		
-		It "Writes a descriptive error" {
-			Assert-VerifiableMocks
-		}
-
-        It "Exits module with code 1" {
-            $result | Should Be 1
-        }		
+		It "Exits the module with a descriptive terminating  error" {
+			$result | Should Match "No solution file found to compile, use the -path parameter if the target solution file isn't in the solution root"
+		}			
 	}
 }
 Describe "New-CompiledSolution_2" {	
@@ -86,28 +79,22 @@ Describe "New-CompiledSolution_2" {
             $Message -eq "Building '$($TestDrive)\test_error.sln' in 'Release' mode"
         }	
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { return $null }		
-		Mock -ModuleName $sut Write-Error {} -Verifiable -ParameterFilter {
-            $Message -eq "Whilst executing MsBuild for solution file $testBasePath\test_error.sln, MsBuild.exe exited with error message: Root element is missing."
-        }
 		
-		$result = 0
+		$result = ""
 		try {
 			$result = New-CompiledSolution -path $testBasePath
 		}
 		catch {
-			throw
+			$result = "$_."
 		}
 		finally {
 			Remove-Module $sut
 		}
-
-		It "Should return a meaningful error message and write output to host" {
-			Assert-VerifiableMocks
-		}
 		
-        It "Exits module with code 1" {
-            $result | Should Be 1
-        }		
+		$exceptionMessage = "MsBuild.exe exited with error message"
+		It "Exits the module with a descriptive terminating error" {
+			$result | Should Match $exceptionMessage
+		}		
 	}	
 
 	Context "When there is an error restoring NuGet packages for a solution file" {	

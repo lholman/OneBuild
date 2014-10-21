@@ -8,15 +8,15 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "Get-Path" {		
-	Context "When module is invoked with NO path parameter" {
+Describe "CommonFunctions.Get-NuGetPath execution" {		
+	Context "When Get-NuGetPath module is invoked with NO path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""
 		try {
-			$result = Get-Path
+			$result = Get-NuGetPath
 		}
 		catch {
 			throw
@@ -25,19 +25,19 @@ Describe "Get-Path" {
 			Remove-Module $sut
 		}
 		
-		It "Should set the path to the calling scripts path" {
-            $result | Should Be "$testBasePath"
+		It "Should return the full path to the bundled NuGet.exe command line" {
+            $result | Should Be "$testBasePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
         }		
 	}
 
-	Context "When module is invoked with an empty path parameter" {
+	Context "When Get-NuGetPath module is invoked with an empty path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""
 		try {
-			$result = Get-Path -path ""
+			$result = Get-NuGetPath -path ""
 		}
 		catch {
 			throw
@@ -46,19 +46,19 @@ Describe "Get-Path" {
 			Remove-Module $sut
 		}
 		
-		It "Should set the path to the calling scripts path" {
-            $result | Should Be "$testBasePath"
-        }		
+		It "Should return the full path to the bundled NuGet.exe command line" {
+            $result | Should Be "$testBasePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+        }			
 	}
 
-	Context "When module is invoked with a null path parameter" {
+	Context "When Get-NuGetPath module is invoked with a null path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""
 		try {
-			$result = Get-Path -path $null
+			$result = Get-NuGetPath -path $null
 		}
 		catch {
 			throw
@@ -67,12 +67,12 @@ Describe "Get-Path" {
 			Remove-Module $sut
 		}
 		
-		It "Should set the path to the calling scripts path" {
-            $result | Should Be "$testBasePath"
+		It "Should return the full path to the bundled NuGet.exe command line" {
+            $result | Should Be "$testBasePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
         }		
 	}
 	
-	Context "When module is invoked with a path (-path parameter) that DOES exist" {
+	Context "When Get-NuGetPath module is invoked with a path (-path parameter) that DOES exist" {
 		
 		Import-Module "$baseModulePath\$sut"
 		#Here we get the TestDrive using pesters $TestDrive variable which holds the full file system location to the temporary PSDrive. 
@@ -80,7 +80,7 @@ Describe "Get-Path" {
 
 		$result = ""
 		try {
-			$result = Get-Path -path $testBasePath
+			$result = Get-NuGetPath -path $testBasePath
 		}
 		catch {
 			throw
@@ -94,7 +94,7 @@ Describe "Get-Path" {
         }		
 	}
 
-	Context "When module is invoked with a path (-path parameter) that does NOT exist" {
+	Context "When Get-NuGetPath module is invoked with a path (-path parameter) that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
 		$testBasePath = "$TestDrive\NonExistentPath\"
@@ -102,7 +102,7 @@ Describe "Get-Path" {
 		$error.Clear()		
 		$result = ""
 		try {
-			Get-Path -path $testBasePath 
+			Get-NuGetPath -path $testBasePath 
 		}
 		catch {
 			$result = $_

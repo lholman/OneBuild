@@ -76,7 +76,7 @@ function Compress-FilesFromPath{
 function Confirm-Path {
 	Param(			
 			[Parameter(
-				Mandatory = $True )]
+				Mandatory = $False )]
 				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
