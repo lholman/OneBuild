@@ -8,7 +8,7 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "New-NuGetPackages_1" {
+Describe "New-NuGetPackagesForConfig_1" {
 
 	Context "When there are NO NuSpec file(s)" {
 		
@@ -20,7 +20,7 @@ Describe "New-NuGetPackages_1" {
 		
 		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0"
+			$result = New-NuGetPackagesForConfig -versionNumber "1.0.0"
 		}
 		catch {
 			throw
@@ -50,7 +50,7 @@ Describe "New-NuGetPackages_1" {
 		
 		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0"
+			$result = New-NuGetPackagesForConfig -versionNumber "1.0.0"
 		}
 		catch {
 			throw
@@ -78,7 +78,7 @@ Describe "New-NuGetPackages_1" {
 		
 		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0" -includeSymbolsPackage
+			$result = New-NuGetPackagesForConfig -versionNumber "1.0.0" -includeSymbolsPackage
 		}
 		catch {
 			throw
@@ -110,7 +110,7 @@ Describe "New-NuGetPackages_1" {
 		
 		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0" -path $testBasePath
+			$result = New-NuGetPackagesForConfig -versionNumber "1.0.0" -path $testBasePath
 		}
 		catch {
 			throw
@@ -128,7 +128,7 @@ Describe "New-NuGetPackages_1" {
         }		
 	}		
 }
-Describe "New-NuGetPackages_2" {
+Describe "New-NuGetPackagesForConfig_2" {
 	Context "When there are 2 NuSpec files" {
 		
 		Import-Module "$baseModulePath\$sut"
@@ -137,7 +137,7 @@ Describe "New-NuGetPackages_2" {
 		
 		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0"
+			$result = New-NuGetPackagesForConfig -versionNumber "1.0.0"
 		}
 		catch {
 			throw
@@ -154,37 +154,7 @@ Describe "New-NuGetPackages_2" {
             $result | Should Be 0
         }		
 	}	
-}
-Describe "New-NuGetPackages_3" {
-	Context "When NuSpec files contain 'configuration' in the name" {
-		
-		Import-Module "$baseModulePath\$sut"
-		New-Item -Name "test.nuspec" -Path $TestDrive -ItemType File
-		New-Item -Name "test.configuration.nuspec" -Path $TestDrive -ItemType File
-		New-Item -Name "testconfiguration.nuspec" -Path $TestDrive -ItemType File
-		New-Item -Name "Configuration.Test.nuspec" -Path $TestDrive -ItemType File		
-		$testBasePath = "$TestDrive"
-		Mock -ModuleName $sut Invoke-NuGetPack {} 
-		
-		$result = 0
-		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0" -path $testBasePath
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-		
-		It "They are ignored" {
-            Assert-MockCalled Invoke-NuGetPack -ModuleName $sut -Exactly 1
-        }
-
-        It "Exits module with code 0" {
-            $result | Should Be 0
-        }		
-	}	
+	
 }
 
 

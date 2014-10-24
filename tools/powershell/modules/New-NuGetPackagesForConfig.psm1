@@ -1,27 +1,27 @@
-function New-NuGetPackages{
+function New-NuGetPackagesForConfig{
 <#
  
 .SYNOPSIS
-    Given a path, will create a new versioned NuGet package for each NuGet spec (.nuspec) file found.
+    Given a path, will dynamically generate new versioned NuGet package(s) for application configuration matching a folder convention, based on any template NuGet spec (.nuspec) files found
 .DESCRIPTION
-     Given a path, will create a new versioned NuGet package for each NuGet spec (.nuspec) file found, optionally allowing you to specify a version number and path to the NuGet console executable.
+ 
 
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
 .PARAMETER versionNumber
 	Mandatory. The version number to stamp the resultant NuGet package with.
-.PARAMETER includeSymbolsPackage
-	Optional. If included, instructs the NuGet executable to include the -symbols switch, generating a matching symbols package containing the 'pdb's'. Defaults to $false.
+.PARAMETER nuGetPath
+	Optional. The full path to the nuget.exe console application.  Defaults to 'packages\NuGet.CommandLine.2.7.3\tools\nuget.exe', i.e. the bundled version of NuGet.
 .PARAMETER path
-	Optional. The path to the parent folder to search for NuGet spec (.nuspec) files in.  Defaults to the calling scripts path.	
+	Optional. The path to the parent folder to search for NuGet spec (.nuspec) template files in.  Defaults to the calling scripts path.	
 .EXAMPLE 
-	Import-Module New-NuGetPackages
+	Import-Module New-NuGetPackagesForConfig
 	Import the module
 .EXAMPLE	
-	Get-Command -Module New-NuGetPackages
+	Get-Command -Module New-NuGetPackagesForConfig
 	List available functions
 .EXAMPLE
-	New-NuGetPackages -specFilePath 
+	New-NuGetPackagesForConfig -specFilePath 
 	Execute the module
 #>
 	[cmdletbinding()]
@@ -30,8 +30,8 @@ function New-NuGetPackages{
 				[string]
 				$versionNumber,
 			[Parameter(Mandatory = $False )]
-				[switch]
-				$includeSymbolsPackage,
+				[string]
+				$nuGetPath,
 			[Parameter(Mandatory = $False)]
 				[string]
 				$path = ""			
@@ -44,10 +44,13 @@ function New-NuGetPackages{
 				$basePath = Confirm-Path -path $path
 				if ($basePath -eq 1) { return 1}
 				
-				Import-Module "$PSScriptRoot\CommonFunctions.psm1"
-				$nuGetPath = Get-NuGetPath
-
-				$specFilePaths = Get-AllNuSpecFiles -path $basePath
+				if ($nuGetPath -eq "")
+				{
+					#Set our default value for nuget.exe
+					$callingScriptPath = Resolve-Path .
+					$nuGetPath = "$callingScriptPath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+				}
+				$specFilePaths = Get-AllConfigTemplateNuSpecFiles -path $basePath
 				
 				if ($specFilePaths -eq $null)
 				{
@@ -66,16 +69,9 @@ function New-NuGetPackages{
 					
 					ForEach ($specFilePath in $specFilePaths)
 					{	
-						if ($includeSymbolsPackage)
-						{
-							$result = Invoke-NuGetPackWithSymbols -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
-						}
-						else
-						{
-							$result = Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
-							
-						}
-						
+
+						$result = Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
+													
 						if ($result) 
 						{
 							Write-Error "Whilst executing NuGet Pack on spec file $specFilePath, NuGet.exe exited with error message: $result"
@@ -104,13 +100,13 @@ function Confirm-Path {
 	return $basePath
 }
 
-function Get-AllNuSpecFiles {
+function Get-AllConfigTemplateNuSpecFiles {
 	Param(			
 		[Parameter(Mandatory = $True )]
 			[string]$path				
 	)
 	#Convention: select all '.nuspec' files in the supplied folder
-	return Get-ChildItem $path | Where-Object {$_.Extension -eq '.nuspec'} | Where-Object {$_.Name -notlike "*configuration*"} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+	return Get-ChildItem $path | Where-Object {$_.Extension -eq '.nuspec'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
 }
 
 function Invoke-NuGetPack {
@@ -136,27 +132,4 @@ function Invoke-NuGetPack {
 	}
 }
 
-function Invoke-NuGetPackWithSymbols {
-	Param(			
-		[Parameter(Mandatory = $True )]
-			[string]$nuGetPath,
-		[Parameter(Mandatory = $True )]
-			[string]$specFilePath,		
-		[Parameter(Mandatory = $True )]
-			[string]$versionNumber,
-		[Parameter(Mandatory = $True )]
-			[string]$path				
-	)
-	$output = & $nuGetPath pack $specFilePath -Version $versionNumber -OutputDirectory $path\BuildOutput -Symbols 2>&1 
-	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
-
-	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
-	Write-Host $output
-	
-	if ($err)
-	{
-		Return $err
-	}
-}
-
-Export-ModuleMember -Function New-NuGetPackages
+Export-ModuleMember -Function New-NuGetPackagesForConfig
