@@ -8,10 +8,8 @@
 
 [CmdletBinding()]
 param(
-	$msbuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",
-	$configMode = "Debug",
-	$buildCounter = "999",
-	$updateNuGetPackages = $false
+	$configuration = "Debug",
+	$buildCounter = "999"
 )
 
 $DebugPreference = "Continue"
@@ -100,7 +98,7 @@ task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 	$errorCode = 0
 	try {
 		Import-Module "$baseModulePath\New-CompiledSolution.psm1"
-		$errorCode = New-CompiledSolution -configMode $configMode
+		$errorCode = New-CompiledSolution -configMode $configuration
 	}
 	catch {
 		throw
@@ -175,9 +173,7 @@ task Invoke-HardcoreClean {
 #=================================================================================================
 # Synopsis: Runs the Pester (https://github.com/pester/Pester) based unit tests for OneBuild
 #=================================================================================================
-task Invoke-OneBuildUnitTests New-Packages, {
-	
-	#.\packages\invoke-build.2.9.12\tools\Invoke-Build.ps1 Invoke-OneBuildUnitTests .\.build.ps1
+task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
 	
 	$pesterPath = Get-ChildItem "$BuildRoot\packages" | Where-Object {$_.Name -like 'pester*'} | Where-Object {$_.PSIsContainer -eq $True} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
 	

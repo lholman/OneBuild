@@ -24,6 +24,15 @@ NuGet installs OneBuild and its dependencies in your $SolutionDir\Packages folde
 ##How OneBuild works##
 OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery OneBuild makes the Commit phase (versioning, compilation, unit testing and packaging of binaries) of a Deployment Pipeline a repeatable, deterministic and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. OneBuild is proud to rely on [Invoke-Build](https://github.com/nightroman/Invoke-Build) for task automation.
 
+##Options##
+
+Using standard [Powershell and Invoke-Build script parameters](bootstrap) you can pass in values for the following. 
+
+`-task` - Optional. The name of the Invoke-Build task to execute, defaults to Invoke-Commit.
+`-configuration` - Optional. The .NET build configuration, `Debug` or `Release`, defaults to `Debug`.
+`-buildcounter` - Optional. The incrementing build counter often used within CI servers, generally forming the third part of a four part version number ([major].[minor].[buildCounter].[revision]), defaults to `999`.
+
+ 
 ##Convention patterns##
 * The OneBuild `Build.bat` bootstrap script must sit alongside the Visual Studio solution file(s) you intend to build. 
 * To be executed with NUnit, NUnit test assemblies *must* 
