@@ -20,9 +20,9 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="tools\**\*.*" target="\tools" />
-	<file src=".build.ps1" target="\tools" />
-	<file src="*.ps1" target="\tools" />
+    <file src="tools\**\*.*" target="\tools\" />
+	<file src="OneBuild.build.ps1" target="\tools\temp\" />
+	<file src="Build.bat" target="\tools\temp\" />	
 	<file src="LICENSE" target="\LICENSE" />
 	<file src="README.MD" target="\README.MD" />
   </files>  
