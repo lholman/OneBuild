@@ -175,7 +175,7 @@ task Invoke-HardcoreClean {
 #=================================================================================================
 # Synopsis: Runs the Pester (https://github.com/pester/Pester) based unit tests for OneBuild
 #=================================================================================================
-task Invoke-OneBuildUnitTests {
+task Invoke-OneBuildUnitTests New-Packages, {
 	
 	#.\packages\invoke-build.2.9.12\tools\Invoke-Build.ps1 Invoke-OneBuildUnitTests .\.build.ps1
 	

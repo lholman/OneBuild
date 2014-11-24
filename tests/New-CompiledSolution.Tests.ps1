@@ -64,6 +64,7 @@ Describe "New-CompiledSolution" {
 		}			
 	}
 }
+<#
 Describe "New-CompiledSolution_2" {	
 	Context "When there is an error compiling a solution file" {
 		
@@ -112,6 +113,7 @@ Describe "New-CompiledSolution_2" {
         }		
 	}	
 }
+#>
 
 $module = Get-Module $sut
 if ($module -ne $null)
