@@ -1,5 +1,4 @@
 @echo off
-  
 rem the following resets %ERRORLEVEL% to 0 prior to running powershell
 verify >nul
 echo. %ERRORLEVEL%
@@ -31,10 +30,7 @@ ECHO task = %TASK%
 ECHO configuration = %CONFIGURATION%
 ECHO buildcounter = %BUILDCOUNTER%
 
-
-)
-
-powershell -NoProfile -ExecutionPolicy bypass -command ".\packages\invoke-build.2.9.12\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER%.\.build.ps1;exit $LASTEXITCODE"
+powershell -NoProfile -ExecutionPolicy bypass -command ".\packages\invoke-build.2.9.12\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER%.\.build.ps1"
 
 if %ERRORLEVEL% == 0 goto OK
 echo ##teamcity[buildStatus status='FAILURE' text='{build.status.text} in execution']
