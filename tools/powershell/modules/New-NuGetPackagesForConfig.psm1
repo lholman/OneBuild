@@ -54,7 +54,7 @@ function New-NuGetPackagesForConfig{
 				
 				if ($specFilePaths -eq $null)
 				{
-					Write-Warning "No NuGet '.nuspec' file found matching the packaging naming convention, exiting without NuGet packaging."
+					Write-Warning "No NuGet '.nuspec' configuration template file(s) found matching the packaging naming convention, exiting without NuGet packaging."
 					return 0
 				}
 				
@@ -69,8 +69,11 @@ function New-NuGetPackagesForConfig{
 					
 					ForEach ($specFilePath in $specFilePaths)
 					{	
-
-						$result = Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
+						
+						#Find matching configuration folder structures for the specified project
+						$result = Get-AllClientsForTemplateNuSpecFile
+						
+						#$result = Invoke-NuGetPack -nuGetPath $nuGetPath -specFilePath $specFilePath -versionNumber $versionNumber -path $basePath
 													
 						if ($result) 
 						{
@@ -105,8 +108,22 @@ function Get-AllConfigTemplateNuSpecFiles {
 		[Parameter(Mandatory = $True )]
 			[string]$path				
 	)
-	#Convention: select all '.nuspec' files in the supplied folder
-	return Get-ChildItem $path | Where-Object {$_.Extension -eq '.nuspec'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+	return Get-ChildItem $path | Where-Object {$_.Extension -eq '.nuspec'} | Where-Object {$_.Name -like "*configuration*"} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+}
+
+function Get-AllClientsForTemplateNuSpecFile {
+	Param(			
+			[Parameter(
+				Mandatory = $True )]
+				[string]$path			
+		)	
+	
+	return Get-ChildItem "$path\configuration\application" | Where {$_.PSIContainer}
+}
+
+function Get-ApplicationPathFromTemplateNuSpecFile {
+
+	#Open the template NuSpec file and return the 'src' value from the first file element
 }
 
 function Invoke-NuGetPack {

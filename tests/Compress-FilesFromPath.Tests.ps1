@@ -183,6 +183,7 @@ Describe "Compress-FilesFromPath" {
         }	
 		It "Should create an archive file in the script root" {
 			Test-Path ("$here\..\myarchive.zip")
+			If (Test-Path ("$here\..\myarchive.zip")){ Remove-Item "$here\..\myarchive.zip" -Force }
 		}
         It "Exits the module with no terminating or non-terminating errors" {
             $error.Count | Should Be 0  #Non-terminating errors from Write-Error
