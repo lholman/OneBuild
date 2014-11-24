@@ -1,0 +1,12 @@
+obj/
+bin/
+_ReSharper.*/
+*.suo
+*.user
+build/
+BuildOutput/
+*TestResult.xml
+TestResult.xml
+/.project
+multiline-commit-message.txt
+myarchive.zip
