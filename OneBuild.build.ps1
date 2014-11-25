@@ -95,10 +95,9 @@ task Invoke-UnitTests {
 #=================================================================================================
 task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 
-	$errorCode = 0
 	try {
 		Import-Module "$baseModulePath\New-CompiledSolution.psm1"
-		$errorCode = New-CompiledSolution -configMode $configuration
+		New-CompiledSolution -configMode $configuration
 	}
 	catch {
 		throw
@@ -106,7 +105,6 @@ task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 	finally {
 		Remove-Module New-CompiledSolution
 	}
-	assert ($errorCode -eq 0)
 }
 
 #=================================================================================================
