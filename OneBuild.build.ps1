@@ -50,7 +50,7 @@ task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, Undo-CheckedO
 # Pre-condition: We only run this in Debug mode as tf.exe returns a non-zero error code
 # if there is nothing to undo checkout on. This is really only required within Development too.
 #=================================================================================================
-task Undo-CheckedOutFiles -If { ($configMode -eq "Debug") } {
+task Undo-CheckedOutFiles -If { ($configuration -eq "Debug") } {
 
 	Import-Module "$baseModulePath\Undo-TfsFileModifications.psm1"
 	Undo-TfsFileModifications -fileName AssemblyInfo.cs
@@ -144,7 +144,7 @@ task Read-MajorMinorVersionNumber -If { ($major -eq $null) -and ($minor -eq $nul
 # and minor = 1.
 # Pre-condition: Will only run if we're building Debug mode (locally) and VersionNumber.xml does **NOT** exist.
 #=================================================================================================
-task New-DefaultVersionNumberXmlFile -If { ($configMode -eq "Debug") -and (!(Test-Path "$BuildRoot\$($versionNumberFileName)")) } {
+task New-DefaultVersionNumberXmlFile -If { ($configuration -eq "Debug") -and (!(Test-Path "$BuildRoot\$($versionNumberFileName)")) } {
 
 	Write-Warning "No $($versionNumberFileName) found at: $BuildRoot, generating default $($versionNumberFileName) (major = 0 and minor = 1)."
 
