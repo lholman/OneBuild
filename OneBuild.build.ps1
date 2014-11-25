@@ -40,21 +40,8 @@ task . Invoke-Commit
 # assemblies, setting a common build number, executing unit tests and packaging the assemblies
 # as a NuGet package
 #=================================================================================================
-task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, Undo-CheckedOutFiles, {
+task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, {
 
-}
-
-#=================================================================================================
-# Synopsis: The final part of Invoke-Commit undoes the changes to the AssemblyInfo.cs made when
-# we executed Set-Version
-# Pre-condition: We only run this in Debug mode as tf.exe returns a non-zero error code
-# if there is nothing to undo checkout on. This is really only required within Development too.
-#=================================================================================================
-task Undo-CheckedOutFiles -If { ($configuration -eq "Debug") } {
-
-	Import-Module "$baseModulePath\Undo-TfsFileModifications.psm1"
-	Undo-TfsFileModifications -fileName AssemblyInfo.cs
-	Remove-Module Undo-TfsFileModifications
 }
 
 #=================================================================================================
@@ -95,10 +82,9 @@ task Invoke-UnitTests {
 #=================================================================================================
 task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 
-	$errorCode = 0
 	try {
 		Import-Module "$baseModulePath\New-CompiledSolution.psm1"
-		$errorCode = New-CompiledSolution -configMode $configuration
+		New-CompiledSolution -configMode $configuration
 	}
 	catch {
 		throw
@@ -106,7 +92,6 @@ task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 	finally {
 		Remove-Module New-CompiledSolution
 	}
-	assert ($errorCode -eq 0)
 }
 
 #=================================================================================================
