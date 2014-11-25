@@ -33,7 +33,7 @@ function Invoke-NUnitTestsForAllProjects{
 				$nUnitPath,
 			[Parameter(Mandatory = $False )]
 				[string]
-				$searchString = "test"			
+				$searchString = "nunit"			
 			)
 	Begin {
 			$DebugPreference = "Continue"
@@ -45,7 +45,7 @@ function Invoke-NUnitTestsForAllProjects{
 				$nUnitPath = "$basePath\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
 				
 				#Our convention: If it's within any bin folder underneath the current folder, has 'test' in the filename (and in the direcotry name) and is a '.dll' then we'll try and run it with NUnit.
-				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.Name -notlike "*nunit*"} | foreach {$_.FullName}
+				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | foreach {$_.FullName}
 				
 				if ($allTestAssemblyPaths -eq $null)
 				{
@@ -54,7 +54,7 @@ function Invoke-NUnitTestsForAllProjects{
 				}
 				
 				$testAssemblyPaths = @()
-				#NOTE: This is unfortunately a little overly complex as a number of test projects (dh.ATCApi.Specification.csproj) within some solutions (e.g. ATCApi.sln) have dependencies on common methods in other test projects (e.g. dh.ATCApi.Tests.Common.csproj and dh.ATCApi.TestBank.csproj). For that reason we have to filter out any assemblies that match our pattern that are in other test projects bin folders due to being referenced.
+				#NOTE: This is unfortunately a little overly complex as a number of test projects within some solutions may have dependencies on common methods in other test projects. For that reason we have to filter out any assemblies that match our pattern that are in other test projects bin folders due to being referenced.
 				ForEach($testAssemblyPath in $allTestAssemblyPaths) 
 				{ 
 					$fileName = Split-Path $testAssemblyPath -Leaf
