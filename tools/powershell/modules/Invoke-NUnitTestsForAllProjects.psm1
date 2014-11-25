@@ -44,8 +44,8 @@ function Invoke-NUnitTestsForAllProjects{
 				
 				$nUnitPath = "$basePath\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
 				
-				#Our convention: If it's within any bin folder underneath the current folder, has 'test' in the filename (and in the direcotry name) and is a '.dll' then we'll try and run it with NUnit.
-				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.Directory -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | foreach {$_.FullName}
+				#Our convention: If it's within any bin folder underneath the current folder, has 'nunit' in the filename (and in the directory name) and is a '.dll' then we'll try and run it with NUnit.
+				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.FullName -notlike "*\packages\*"} | Where-Object {$_.Name -notlike "*$searchString.framework*"} | foreach {$_.FullName}
 				
 				if ($allTestAssemblyPaths -eq $null)
 				{
@@ -63,7 +63,7 @@ function Invoke-NUnitTestsForAllProjects{
 					
 					if ($fileName -eq $projectName)
 					{
-						Write-Debug "Adding: $testAssemblyPath"
+						Write-Warning "Adding: $testAssemblyPath"
 						$testAssemblyPaths += $testAssemblyPath
 					}
 				}
