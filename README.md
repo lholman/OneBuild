@@ -32,12 +32,16 @@ Using standard [Powershell and Invoke-Build script parameters](bootstrap) you ca
 * `-configuration` - Optional. The .NET build configuration, `Debug` or `Release`, defaults to `Debug`.
 * `-buildcounter` - Optional. The incrementing build counter often used within CI servers, generally forming the third part of a four part version number ([major].[minor].[buildCounter].[revision]), defaults to `999`.
 
- 
-##Convention patterns##
-* The OneBuild `Build.bat` bootstrap script must sit alongside the Visual Studio solution file(s) you intend to build. 
-* To be executed with NUnit, NUnit test assemblies *must* 
-	* Contain "nunit" (case-insensitive) in their assembly names. 
-	* Be output into a common output folder named \bin, regardless of VS build configuration. <TODO: Guide on setting common output paths for all VS build configurations> 
+##The build pipeline and convention##
+Much of the logic within each phase of the build pipeline relies heavily on convention, thus no configuration. Adhere to the following convention and OneBuild should just work.  
+
+###Execution###
+* The OneBuild `Build.bat` bootstrap script and Invoke-Build `OneBuild.build.ps1` build script *must* sit alongside the Visual Studio solution file(s) you intend to build. If you install with NuGet these are copied for you when executing `PM> Install-Package Nunit` 
+
+###Invoke-UnitTests###
+* To be executed with [NUnit](http://www.nunit.org/), NUnit test assemblies *must* 
+	* Contain "nunit" (case-insensitive) in their assembly *and* directory names. 
+	* Be output into a common output folder named \bin, regardless of Visual Studio build configuration. 
 
 ##Early assumptions
 * You use Git for version control (TFS support coming soon)
