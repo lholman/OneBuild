@@ -62,8 +62,11 @@ function Set-BuildNumberWithGitCommitDetail{
 			$DebugPreference = "Continue"
 		}	
 	Process {
-
-				#$scrumName = "Unknown"
+				$gitValid = Test-Git
+				if ($gitValid -eq $false){
+					throw "Unable to find Git defined within the Windows path variable. Please check Git is both installed and defined in the Windows path environment variable and try again." 
+				}
+				
 				if ($gitRepoPath -eq "")
 				{
 					$gitRepoPath = Resolve-Path .
@@ -152,5 +155,23 @@ function Set-BuildNumberWithGitCommitDetail{
 		End {
 			return $assemblyInformationalVersion
 		}
+}
+
+function Test-Git {
+
+	$environmentPath = Get-EnvironmentPath
+	if ($environmentPath -notlike "*git*")
+	{
+		return $false
+	}
+	
+	return $true
+}
+
+function Get-EnvironmentPath {
+	
+	return "$($env:Path)"
 
 }
+
+Export-ModuleMember -Function Set-BuildNumberWithGitCommitDetail
