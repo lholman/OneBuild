@@ -70,14 +70,14 @@ function Set-BuildNumberWithGitCommitDetail{
 				if ($gitRepoPath -eq "")
 				{
 					$gitRepoPath = Resolve-Path .
-					Write-Warning "Setting Git repo path to the calling scripts path (using Resolve-Path .): $gitRepoPath"
+					Write-Verbose "Setting Git repo path to the calling scripts path (using Resolve-Path .): $gitRepoPath"
 				}
 				
 				if ($gitPath -eq "")
 				{
 					$gitPath = "git.exe"
 				}
-				Write-Warning "Setting Git path to: $gitPath"
+				Write-Verbose "Setting Git path to: $gitPath"
 
 				#Set sensible defaults for revision and branchName in case we can't determine them
 				$revision = "0"
@@ -86,15 +86,15 @@ function Set-BuildNumberWithGitCommitDetail{
 				Try	{
 						#Gets a count of the commits to HEAD, this should (hopefully) give us an incrementing counter much like a revision number in more classic non-distributed source control systems 
 						$revision = & $gitPath rev-list --count HEAD
-						Write-Host "Revision is: $revision"
+						Write-Verbose "Revision is: $revision"
 						
 						#Gets the latest Git commit identifier to use within the assembly informational version
 						$gitCommitIdentifier = & $gitPath rev-parse --verify --short HEAD
-						Write-Host "GitCommitIdentifier is: $gitCommitIdentifier"
+						Write-Verbose "GitCommitIdentifier is: $gitCommitIdentifier"
 						
 						#Gets the current git branch name, if unable to then use "unknown"
 						$branchName = & $gitPath rev-parse --symbolic-full-name --abbrev-ref HEAD
-						Write-Host "BranchName is: $branchName"
+						Write-Verbose "BranchName is: $branchName"
 					}
 				Catch [System.Exception]
 				{
@@ -111,10 +111,10 @@ function Set-BuildNumberWithGitCommitDetail{
 				$newAssemblyFileVersion = 'AssemblyFileVersion("' + $assemblyFileVersion + '")'
 				$newAssemblyInformationalVersion = 'AssemblyInformationalVersion("' + $($assemblyInformationalVersion.ToLower()) + '")'	
 				
-				Write-Host "Assembly versioning set as follows.."
-				Write-Host "$newAssemblyVersion"
-				Write-Host "$newAssemblyFileVersion"
-				Write-Host "$newAssemblyInformationalVersion"
+				Write-Verbose "Assembly versioning set as follows.."
+				Write-Verbose "$newAssemblyVersion"
+				Write-Verbose "$newAssemblyFileVersion"
+				Write-Verbose "$newAssemblyInformationalVersion"
 
 				#Enumerate through all AssemblyInfo.cs files, updating the AssemblyVersion, AssemblyFileVersion and AssemblyInformationalVersion accordingly, 
 				#this is subsequently reverted within Invoke-CompileSolution once the compilation is complete.
@@ -122,7 +122,7 @@ function Set-BuildNumberWithGitCommitDetail{
 				ForEach ($assemblyInfoFile in $assemblyInfoFiles)
 				{
 					Try	{
-						Write-Host "Updating $assemblyInfoFile with build number"
+						Write-Verbose "Updating $assemblyInfoFile with build number"
 						(Get-Content $assemblyInfoFile -encoding utf8) | 
 						%{ $_ -replace 'AssemblyVersion\("[0-9]+(\.([0-9]+|\*)){1,3}"\)', $newAssemblyVersion }  | 
 						%{ $_ -replace 'AssemblyFileVersion\("[0-9]+(\.([0-9]+|\*)){1,3}"\)', $newAssemblyFileVersion } | 
@@ -134,7 +134,7 @@ function Set-BuildNumberWithGitCommitDetail{
 						$Invocation = (Get-Variable MyInvocation -Scope 1).Value
 						$basePath = Split-Path $Invocation.MyCommand.Path
 						
-						Write-Host "Undoing AssemblyInfo.cs file changes"
+						Write-Verbose "Undoing AssemblyInfo.cs file changes"
 						Import-Module "$basePath\Undo-GitFileModifications.psm1"
 						Undo-GitFileModifications -fileName AssemblyInfo.cs
 						Remove-Module Undo-GitFileModifications
