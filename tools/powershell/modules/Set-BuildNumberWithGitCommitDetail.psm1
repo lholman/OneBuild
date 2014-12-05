@@ -62,10 +62,6 @@ function Set-BuildNumberWithGitCommitDetail{
 			$DebugPreference = "Continue"
 		}	
 	Process {
-				$gitValid = Test-Git
-				if ($gitValid -eq $false){
-					throw "Unable to find Git defined within the Windows path variable. Please check Git is both installed and defined in the Windows path environment variable and try again." 
-				}
 				
 				if ($gitRepoPath -eq "")
 				{
@@ -76,9 +72,15 @@ function Set-BuildNumberWithGitCommitDetail{
 				if ($gitPath -eq "")
 				{
 					$gitPath = "git.exe"
+					Write-Verbose "Assuming (default) Git.exe is included in the Windows path environment variable: $gitPath"
 				}
-				Write-Verbose "Setting Git path to: $gitPath"
+				else
+				{
+					Write-Verbose "Git path set as: $gitPath"
+				}
 
+				Test-Git $gitPath			
+				
 				#Set sensible defaults for revision and branchName in case we can't determine them
 				$revision = "0"
 				$branchName = "unknown"
@@ -158,14 +160,32 @@ function Set-BuildNumberWithGitCommitDetail{
 }
 
 function Test-Git {
-
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
 	$environmentPath = Get-EnvironmentPath
 	if ($environmentPath -notlike "*git*")
 	{
-		return $false
+		throw "Unable to find Git defined within the Windows path environment variable. Please check Git is both installed and included in the Windows path environment (system) variable and try again." 
 	}
 	
-	return $true
+	$gitStatus = Get-GitStatus -gitPath $gitPath
+	if ($gitStatus -like "*Not a git repository*")
+	{
+		throw "The current path is not a git repository, try using (git init)"
+	}
+	
+	return
+}
+
+function Get-GitStatus {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+	
+	return & $gitpath status
 }
 
 function Get-EnvironmentPath {
