@@ -27,7 +27,7 @@ Describe "Set-BuildNumberWithGitCommitDetail" {
 		}
 		
 		It "Exits the module with a descriptive terminating error" {
-			$result | Should Be "Unable to find Git defined within the Windows path environment variable. Please check Git is both installed and included in the Windows path environment (system) variable and try again." 
+			$result | Should Be "Unable to find Git defined within the Windows path environment variable. Either check Git is both installed and included in the Windows path environment (system) variable or provide the full path to 'git.exe' using the '$gitPath' variable and try again." 
         }			
 	}	
 
