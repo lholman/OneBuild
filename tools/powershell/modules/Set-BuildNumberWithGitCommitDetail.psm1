@@ -52,7 +52,7 @@ function Set-BuildNumberWithGitCommitDetail{
 			[Parameter(
 				Position = 4,
 				Mandatory = $False )]
-				[string]$gitPath,	
+				[string]$gitPath = "",	
 			[Parameter(
 				Position = 5,
 				Mandatory = $False )]
@@ -62,36 +62,29 @@ function Set-BuildNumberWithGitCommitDetail{
 			$DebugPreference = "Continue"
 		}	
 	Process {
-
-				#$scrumName = "Unknown"
+				
 				if ($gitRepoPath -eq "")
 				{
 					$gitRepoPath = Resolve-Path .
-					Write-Warning "Setting Git repo path to the calling scripts path (using Resolve-Path .): $gitRepoPath"
+					Write-Verbose "Setting Git repository path to the calling scripts path (using Resolve-Path .): $gitRepoPath"
 				}
 				
-				if ($gitPath -eq "")
-				{
-					$gitPath = "git.exe"
-				}
-				Write-Warning "Setting Git path to: $gitPath"
-
+				$gitPath = Set-GitPath -gitPath $gitPath
+				Test-Git -gitPath $gitPath			
+				
 				#Set sensible defaults for revision and branchName in case we can't determine them
 				$revision = "0"
 				$branchName = "unknown"
+				$revision = Set-Revision -gitPath $gitPath
 				
-				Try	{
-						#Gets a count of the commits to HEAD, this should (hopefully) give us an incrementing counter much like a revision number in more classic non-distributed source control systems 
-						$revision = & $gitPath rev-list --count HEAD
-						Write-Host "Revision is: $revision"
-						
+				Try	{		
 						#Gets the latest Git commit identifier to use within the assembly informational version
 						$gitCommitIdentifier = & $gitPath rev-parse --verify --short HEAD
-						Write-Host "GitCommitIdentifier is: $gitCommitIdentifier"
+						Write-Verbose "GitCommitIdentifier is: $gitCommitIdentifier"
 						
 						#Gets the current git branch name, if unable to then use "unknown"
 						$branchName = & $gitPath rev-parse --symbolic-full-name --abbrev-ref HEAD
-						Write-Host "BranchName is: $branchName"
+						Write-Verbose "BranchName is: $branchName"
 					}
 				Catch [System.Exception]
 				{
@@ -108,10 +101,10 @@ function Set-BuildNumberWithGitCommitDetail{
 				$newAssemblyFileVersion = 'AssemblyFileVersion("' + $assemblyFileVersion + '")'
 				$newAssemblyInformationalVersion = 'AssemblyInformationalVersion("' + $($assemblyInformationalVersion.ToLower()) + '")'	
 				
-				Write-Host "Assembly versioning set as follows.."
-				Write-Host "$newAssemblyVersion"
-				Write-Host "$newAssemblyFileVersion"
-				Write-Host "$newAssemblyInformationalVersion"
+				Write-Verbose "Assembly versioning set as follows.."
+				Write-Verbose "$newAssemblyVersion"
+				Write-Verbose "$newAssemblyFileVersion"
+				Write-Verbose "$newAssemblyInformationalVersion"
 
 				#Enumerate through all AssemblyInfo.cs files, updating the AssemblyVersion, AssemblyFileVersion and AssemblyInformationalVersion accordingly, 
 				#this is subsequently reverted within Invoke-CompileSolution once the compilation is complete.
@@ -119,7 +112,7 @@ function Set-BuildNumberWithGitCommitDetail{
 				ForEach ($assemblyInfoFile in $assemblyInfoFiles)
 				{
 					Try	{
-						Write-Host "Updating $assemblyInfoFile with build number"
+						Write-Verbose "Updating $assemblyInfoFile with build number"
 						(Get-Content $assemblyInfoFile -encoding utf8) | 
 						%{ $_ -replace 'AssemblyVersion\("[0-9]+(\.([0-9]+|\*)){1,3}"\)', $newAssemblyVersion }  | 
 						%{ $_ -replace 'AssemblyFileVersion\("[0-9]+(\.([0-9]+|\*)){1,3}"\)', $newAssemblyFileVersion } | 
@@ -131,7 +124,7 @@ function Set-BuildNumberWithGitCommitDetail{
 						$Invocation = (Get-Variable MyInvocation -Scope 1).Value
 						$basePath = Split-Path $Invocation.MyCommand.Path
 						
-						Write-Host "Undoing AssemblyInfo.cs file changes"
+						Write-Verbose "Undoing AssemblyInfo.cs file changes"
 						Import-Module "$basePath\Undo-GitFileModifications.psm1"
 						Undo-GitFileModifications -fileName AssemblyInfo.cs
 						Remove-Module Undo-GitFileModifications
@@ -152,5 +145,92 @@ function Set-BuildNumberWithGitCommitDetail{
 		End {
 			return $assemblyInformationalVersion
 		}
+}
+
+function Set-Revision {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+
+	$gitLog = Get-GitLog -gitPath $gitPath
+	if ($gitLog -eq "fatal: bad default revision 'HEAD'")
+	{
+		throw "Unable to determine revision number as no commits have been made to this Git repository, (use ""git add"" and ""git commit"") and try again."
+	}
+	
+	#Gets a count of the commits to HEAD, this should give us an incrementing counter much like a revision number in more "classic" non-distributed source control systems 
+	& $gitPath rev-list --count HEAD
+	Write-Verbose "Setting revision number to: $revision"
 
 }
+
+function Set-GitPath {
+	Param(			
+		[Parameter(Mandatory = $False )]
+			[string]$gitPath			
+	)
+	
+	if ($gitPath -eq "")
+	{
+		$environmentPath = Get-EnvironmentPath
+		if ($environmentPath -notlike "*git*")
+		{
+			throw "Unable to find Git defined within the Windows path environment variable. Either check Git is both installed and included in the Windows path environment (system) variable or provide the full path to 'git.exe' using the '$gitPath' variable and try again." 
+		}
+		$gitPath = "git.exe"
+		Write-Verbose "Assuming (default) Git.exe is included in the Windows path environment variable: $gitPath"
+		return $gitPath
+	}
+	else
+	{
+		if (Test-Path $path) 
+		{
+			return $gitPath
+		}
+		Write-Verbose "Git path set as: $gitPath"
+	}					
+	throw "Supplied path: $path does not exist"
+
+}
+
+function Test-Git {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+
+	$gitStatus = Get-GitStatus -gitPath $gitPath
+	if ($gitStatus -like "*Not a git repository*")
+	{
+		throw "The current path is not a git repository, try using (git init)"
+	}
+	
+	return
+}
+
+function Get-GitLog {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+	
+	return & $gitpath log
+}
+
+function Get-GitStatus {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+	
+	return & $gitpath status
+}
+
+function Get-EnvironmentPath {
+	
+	return "$($env:Path)"
+
+}
+
+Export-ModuleMember -Function Set-BuildNumberWithGitCommitDetail
