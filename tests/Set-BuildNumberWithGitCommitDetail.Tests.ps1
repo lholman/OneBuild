@@ -51,6 +51,28 @@ Describe "Set-BuildNumberWithGitCommitDetail" {
 			$result | Should Be "The current path is not a git repository, try using (git init)" 
         }			
 	}	
+
+
+	Context "When a Git repository has no commit history" {
+		Import-Module "$baseModulePath\$sut"
+		Mock -ModuleName $sut Get-GitLog { return "fatal: bad default revision 'HEAD'" }
+
+		$result = ""
+		try {
+			Set-BuildNumberWithGitCommitDetail -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$result | Should Be "Unable to determine revision number as no commits have been made to this Git repository, (use ""git add"" and ""git commit"") and try again." 
+        }		
+	
+	}
 	
 }
 

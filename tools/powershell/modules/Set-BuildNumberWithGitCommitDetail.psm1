@@ -75,12 +75,9 @@ function Set-BuildNumberWithGitCommitDetail{
 				#Set sensible defaults for revision and branchName in case we can't determine them
 				$revision = "0"
 				$branchName = "unknown"
+				$revision = Set-Revision -gitPath $gitPath
 				
-				Try	{
-						#Gets a count of the commits to HEAD, this should (hopefully) give us an incrementing counter much like a revision number in more classic non-distributed source control systems 
-						$revision = & $gitPath rev-list --count HEAD
-						Write-Verbose "Revision is: $revision"
-						
+				Try	{		
 						#Gets the latest Git commit identifier to use within the assembly informational version
 						$gitCommitIdentifier = & $gitPath rev-parse --verify --short HEAD
 						Write-Verbose "GitCommitIdentifier is: $gitCommitIdentifier"
@@ -150,6 +147,24 @@ function Set-BuildNumberWithGitCommitDetail{
 		}
 }
 
+function Set-Revision {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+
+	$gitLog = Get-GitLog -gitPath $gitPath
+	if ($gitLog -eq "fatal: bad default revision 'HEAD'")
+	{
+		throw "Unable to determine revision number as no commits have been made to this Git repository, (use ""git add"" and ""git commit"") and try again."
+	}
+	
+	#Gets a count of the commits to HEAD, this should give us an incrementing counter much like a revision number in more "classic" non-distributed source control systems 
+	& $gitPath rev-list --count HEAD
+	Write-Verbose "Setting revision number to: $revision"
+
+}
+
 function Set-GitPath {
 	Param(			
 		[Parameter(Mandatory = $False )]
@@ -192,6 +207,15 @@ function Test-Git {
 	}
 	
 	return
+}
+
+function Get-GitLog {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$gitPath			
+	)
+	
+	return & $gitpath log
 }
 
 function Get-GitStatus {
