@@ -1,13 +1,4 @@
 @ECHO OFF
-
-SETLOCAL EnableDelayedExpansion
-FOR /F "tokens=1,2 delims=#" %%a IN ('"PROMPT #$H#$E# & ECHO on & for %%b in (1) do rem"') do (
-  SET "DEL=%%a"
-)
-
-CALL :COLOR_TEXT 0E "WARNING Please use 'OneBuild.bat' to run OneBuild, 'Build.bat' will be removed from OneBuild 1.1.x onwards"
-ECHO .
-
 rem the following resets %ERRORLEVEL% to 0 prior to running powershell
 VERIFY >NUL
 ECHO. %ERRORLEVEL%
@@ -46,10 +37,3 @@ ECHO ##teamcity[buildStatus status='FAILURE' text='{build.status.text} in execut
 EXIT /b %ERRORLEVEL%
 
 :OK
-EXIT
-
-:COLOR_TEXT
-ECHO OFF
-<NUL SET /p ".=%DEL%" > "%~2"
-findstr /v /a:%1 /R "^$" "%~2" NUL
-DEL "%~2" > NUL 2>&1
