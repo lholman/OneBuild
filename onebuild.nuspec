@@ -14,6 +14,8 @@
     <releaseNotes />
     <copyright>Copyright 2014</copyright>
     <dependencies>
+      <dependency id="NuGet.CommandLine" version="2.7.3" />
+      <dependency id="NUnit.Runners" version="2.6.3" />
 	  <dependency id="Invoke-Build" version="2.9.12" />  
     </dependencies>
   </metadata>
