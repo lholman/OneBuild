@@ -23,6 +23,7 @@
     <file src="tools\**\*.*" target="\tools\" />
 	<file src="OneBuild.build.ps1" target="\tools\temp\" />
 	<file src="Build.bat" target="\tools\temp\" />	
+	<file src="OneBuild.bat" target="\tools\temp\" />		
 	<file src="LICENSE" target="\tools\LICENSE" />
 	<file src="README.MD" target="\tools\README.MD" />
   </files>  
