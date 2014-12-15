@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Onebuild by lholman</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Onebuild</h1>
+        <p>Convention based PowerShell build for .NET</p>
+
+        <p class="view"><a href="https://github.com/lholman/OneBuild">View the Project on GitHub <small>lholman/OneBuild</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/lholman/OneBuild/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/lholman/OneBuild/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/lholman/OneBuild">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="onebuild" class="anchor" href="#onebuild" aria-hidden="true"><span class="octicon octicon-link"></span></a>OneBuild</h1>
+
+<p>OneBuild is a modular set of convention based .NET solution build scripts written in PowerShell, relying on Invoke-Build for task automation. See <a href="https://github.com/lholman/OneBuild">https://github.com/lholman/OneBuild</a> for more details.</p>
+
+<p><a href="https://ci.appveyor.com/project/lholman/onebuild/branch/master"><img src="https://ci.appveyor.com/api/projects/status/8pplvimhcbrdev0l/branch/master?svg=true" alt="Build status"></a></p>
+
+<h2>
+<a id="building-with-onebuild" class="anchor" href="#building-with-onebuild" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building with OneBuild</h2>
+
+<p>OneBuild is shipped as a solution NuGet package, use it to build your solution by importing the NuGet package..</p>
+
+<p><code>Import-Module OneBuild</code></p>
+
+<p>
+ </p>
+
+<p>Then simply run.. </p>
+
+<pre><code>C:\&gt;cd "Path to your solution"
+C:\Path to your solution\&gt;OneBuild.bat
+</code></pre>
+
+<p>NuGet installs OneBuild and its dependencies in your $SolutionDir\Packages folder, copying the <code>OneBuild.bat</code> bootstrap script to the root of the $SolutionDir</p>
+
+<h2>
+<a id="how-onebuild-works" class="anchor" href="#how-onebuild-works" aria-hidden="true"><span class="octicon octicon-link"></span></a>How OneBuild works</h2>
+
+<p>OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery, OneBuild makes the Commit phase (versioning, compilation, unit testing and packaging of binaries) of a Deployment Pipeline a repeatable, deterministic and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. OneBuild is proud to rely on <a href="https://github.com/nightroman/Invoke-Build">Invoke-Build</a> for task automation.</p>
+
+<h2>
+<a id="options" class="anchor" href="#options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Options</h2>
+
+<p>Using standard <a href="bootstrap">Powershell and Invoke-Build script parameters</a> you can pass in values for the following. </p>
+
+<ul>
+<li>
+<code>-task</code> - Optional. The name of the Invoke-Build task to execute, defaults to Invoke-Commit.</li>
+<li>
+<code>-configuration</code> - Optional. The .NET build configuration, <code>Debug</code> or <code>Release</code>, defaults to <code>Debug</code>.</li>
+<li>
+<code>-buildcounter</code> - Optional. The incrementing build counter often used within CI servers, generally forming the third part of a four part version number ([major].[minor].[buildCounter].[revision]), defaults to <code>999</code>.</li>
+</ul>
+
+<h2>
+<a id="the-build-pipeline-and-convention" class="anchor" href="#the-build-pipeline-and-convention" aria-hidden="true"><span class="octicon octicon-link"></span></a>The build pipeline and convention</h2>
+
+<p>Much of the logic within each phase of the build pipeline relies heavily on convention, thus no configuration. Adhere to the following convention and OneBuild should just work.  </p>
+
+<h3>
+<a id="execution" class="anchor" href="#execution" aria-hidden="true"><span class="octicon octicon-link"></span></a>Execution</h3>
+
+<ul>
+<li>The OneBuild <code>OneBuild.bat</code> bootstrap script and Invoke-Build <code>OneBuild.build.ps1</code> build script <em>must</em> sit alongside the Visual Studio solution file(s) you intend to build. If you install with NuGet these are copied for you when executing <code>PM&gt; Install-Package Nunit</code> </li>
+</ul>
+
+<h3>
+<a id="invoke-unittests" class="anchor" href="#invoke-unittests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Invoke-UnitTests</h3>
+
+<ul>
+<li>To be executed with <a href="http://www.nunit.org/">NUnit</a>, NUnit test assemblies <em>must</em> 
+
+<ul>
+<li>Contain "nunit" (case-insensitive) in their assembly <em>and</em> directory names. </li>
+<li>Be output into a common output folder named \bin, regardless of Visual Studio build configuration. </li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="early-assumptions" class="anchor" href="#early-assumptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Early assumptions</h2>
+
+<ul>
+<li>You use Git for version control (TFS support coming soon)</li>
+<li>The 3 part <a href="SemVer.org">Semantic Versioning</a> style is used for all NuGet package versioning. For Git repos a global commit count (4th part) and the short commit Id (informational text) are added to the assembly versions. </li>
+<li>You use NUnit for unit testing (Support for MSTest never coming ;), but other OSS test frameworks for sure.)</li>
+<li>You want to use NuGet for packaging up your assemblies</li>
+</ul>
+
+<h2>
+<a id="why-onebuild" class="anchor" href="#why-onebuild" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why OneBuild?</h2>
+
+<p>There are a number of benefits of having a build process that can be run in its entirety on a local (developers) machine.</p>
+
+<ul>
+<li>
+<strong>Fail earlier</strong>. Catch more failed builds earlier on by changing fewer variables, i.e. don’t compile and build in a completely different way on your Continuous Integration (CI) server than your developers do on their development machines. </li>
+<li>
+<strong>Own a debuggable build process</strong>. Building software is tricky, let me (or anyone) debug that process locally, so we don’t have to constantly break the CI builds to see things fail. </li>
+<li>
+<strong>Make the build process a first class citizen</strong>. Yes, let’s put the build process under version control and treat it as code, I care about changes and versions… A LOT. Not to mention I want an easy way to clone that build process in to as many application branches as I want, without fudging configuration.</li>
+<li>
+<strong>Improve quality</strong>. If we treat the build process as code then we can also test it as part of its own pipeline: See our <a href="https://github.com/nightroman/Invoke-Build">Pester</a> <a href="https://github.com/lholman/OneBuild/tree/master/tests">unit tests here</a><br>
+</li>
+<li>
+<strong>Decouple yourself from the CI server vendor</strong>. I love <a href="http://jetbrains.com/teamcity">TeamCity</a>, have a long running tempestuous relationship with Team Foundation Server (TFS), have had a few flings with <a href="http://jenkinsci.com">Jenkins</a> and chatted up the likes of <a href="http://www.appveyor.com">AppVeyor</a> and various other CI and build server products. The one thing they all have in common is they give you an inch, but allow you to take a mile. It is incredibly easy to use their "simple" out-the-box, add-on tasks, runners and plug-ins, however this means it is almost impossible to move to another CI server technology or run a build in its entirety locally. </li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/lholman">lholman</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
