@@ -16,10 +16,10 @@ Then simply run..
 
 ```
 C:\>cd "Path to your solution"
-C:\Path to your solution\>Build.bat
+C:\Path to your solution\>OneBuild.bat
 ``` 
 
-NuGet installs OneBuild and its dependencies in your $SolutionDir\Packages folder, copying the `Build.bat` bootstrap script to the root of the $SolutionDir
+NuGet installs OneBuild and its dependencies in your $SolutionDir\Packages folder, copying the `OneBuild.bat` bootstrap script to the root of the $SolutionDir
 
 ##How OneBuild works##
 OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery, OneBuild makes the Commit phase (versioning, compilation, unit testing and packaging of binaries) of a Deployment Pipeline a repeatable, deterministic and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. OneBuild is proud to rely on [Invoke-Build](https://github.com/nightroman/Invoke-Build) for task automation.
@@ -36,7 +36,7 @@ Using standard [Powershell and Invoke-Build script parameters](bootstrap) you ca
 Much of the logic within each phase of the build pipeline relies heavily on convention, thus no configuration. Adhere to the following convention and OneBuild should just work.  
 
 ###Execution###
-* The OneBuild `Build.bat` bootstrap script and Invoke-Build `OneBuild.build.ps1` build script *must* sit alongside the Visual Studio solution file(s) you intend to build. If you install with NuGet these are copied for you when executing `PM> Install-Package Nunit` 
+* The OneBuild `OneBuild.bat` bootstrap script and Invoke-Build `OneBuild.build.ps1` build script *must* sit alongside the Visual Studio solution file(s) you intend to build. If you install with NuGet these are copied for you when executing `PM> Install-Package Nunit` 
 
 ###Invoke-UnitTests###
 * To be executed with [NUnit](http://www.nunit.org/), NUnit test assemblies *must* 
