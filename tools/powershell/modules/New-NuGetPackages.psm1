@@ -10,8 +10,6 @@ function New-NuGetPackages{
 	Requirements: Copy this module to any location found in $env:PSModulePath
 .PARAMETER versionNumber
 	Mandatory. The version number to stamp the resultant NuGet package with.
-.PARAMETER nuGetPath
-	Optional. The full path to the nuget.exe console application.  Defaults to 'packages\NuGet.CommandLine.2.7.3\tools\nuget.exe', i.e. the bundled version of NuGet.
 .PARAMETER includeSymbolsPackage
 	Optional. If included, instructs the NuGet executable to include the -symbols switch, generating a matching symbols package containing the 'pdb's'. Defaults to $false.
 .PARAMETER path
@@ -32,9 +30,6 @@ function New-NuGetPackages{
 				[string]
 				$versionNumber,
 			[Parameter(Mandatory = $False )]
-				[string]
-				$nuGetPath,
-			[Parameter(Mandatory = $False )]
 				[switch]
 				$includeSymbolsPackage,
 			[Parameter(Mandatory = $False)]
@@ -49,12 +44,9 @@ function New-NuGetPackages{
 				$basePath = Confirm-Path -path $path
 				if ($basePath -eq 1) { return 1}
 				
-				if ($nuGetPath -eq "")
-				{
-					#Set our default value for nuget.exe
-					$callingScriptPath = Resolve-Path .
-					$nuGetPath = "$callingScriptPath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
-				}
+				Import-Module "$PSScriptRoot\CommonFunctions.psm1"
+				$nuGetPath = Get-NuGetPath
+
 				$specFilePaths = Get-AllNuSpecFiles -path $basePath
 				
 				if ($specFilePaths -eq $null)
