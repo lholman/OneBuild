@@ -83,7 +83,7 @@ function Get-NUnitPath {
 				}
 				if (Test-Path $path) 
 				{
-					$newestNuGetPath = Get-ChildItem "$path\packages" -Recurse | Where-Object {$_.Name -like 'nunit.exe'} | Where-Object {$_.FullName -like '*nunit.runners*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
+					$newestNuGetPath = Get-ChildItem "$path\packages" -Recurse | Where-Object {$_.Name -like 'nunit-console.exe'} | Where-Object {$_.FullName -like '*nunit.runners*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
 					return $newestNuGetPath
 				}
 				

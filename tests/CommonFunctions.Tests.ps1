@@ -138,11 +138,11 @@ Describe "CommonFunctions.Get-NUnitPath" {
 		New-Item -Name "packages" -Path $TestDrive -ItemType Directory
 		New-Item -Name "NUnit.Runners.2.6.2" -Path "$TestDrive\packages" -ItemType Directory
 		New-Item -Name "tools" -Path "$TestDrive\packages\NUnit.Runners.2.6.2" -ItemType Directory		
-		New-Item -Name "nunit.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.2\tools" -ItemType File	
+		New-Item -Name "nunit-console.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.2\tools" -ItemType File	
 		New-Item -Name "NUnit.Runners.2.6.3" -Path "$TestDrive\packages" -ItemType Directory		
 		New-Item -Name "tools" -Path "$TestDrive\packages\NUnit.Runners.2.6.3" -ItemType Directory		
-		New-Item -Name "nunit.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.3\tools" -ItemType File			
-		$correctNUnitPath = "$($TestDrive)\packages\NUnit.Runners.2.6.3\tools\nunit.exe"
+		New-Item -Name "nunit-console.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.3\tools" -ItemType File			
+		$correctNUnitPath = "$($TestDrive)\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
 		$testBasePath = "$($TestDrive)"
 
 		$result = ""
