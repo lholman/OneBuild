@@ -130,6 +130,37 @@ Describe "CommonFunctions.Get-NuGetPath" {
 	}	
 }
 
+Describe "CommonFunctions.Get-NUnitPath" {
+	
+	Context "When there is more than one version of NuGet.Commandline installed" {
+
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "packages" -Path $TestDrive -ItemType Directory
+		New-Item -Name "NUnit.Runners.2.6.2" -Path "$TestDrive\packages" -ItemType Directory
+		New-Item -Name "tools" -Path "$TestDrive\packages\NUnit.Runners.2.6.2" -ItemType Directory		
+		New-Item -Name "nunit.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.2\tools" -ItemType File	
+		New-Item -Name "NUnit.Runners.2.6.3" -Path "$TestDrive\packages" -ItemType Directory		
+		New-Item -Name "tools" -Path "$TestDrive\packages\NUnit.Runners.2.6.3" -ItemType Directory		
+		New-Item -Name "nunit.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.3\tools" -ItemType File			
+		$correctNUnitPath = "$($TestDrive)\packages\NUnit.Runners.2.6.3\tools\nunit.exe"
+		$testBasePath = "$($TestDrive)"
+
+		$result = ""
+		try {
+			$result = Get-NUnitPath -path $testBasePath
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should return the full path to to the highest version of NUnit.Runners found in the solution packages folder" {
+            $result | Should Be $correctNUnitPath
+        }			
+	}	
+}
 
 $module = Get-Module $sut
 if ($module -ne $null)

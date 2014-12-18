@@ -42,7 +42,8 @@ function Invoke-NUnitTestsForAllProjects{
 				$basePath = Confirm-Path -path $path
 				if ($basePath -eq 1) { return 1}
 				
-				$nUnitPath = "$basePath\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
+				Import-Module "$PSScriptRoot\CommonFunctions.psm1"
+				$nUnitPath = Get-NUnitPath
 				
 				#Our convention: If it's within any bin folder underneath the current folder, has 'nunit' in the filename (and in the directory name) and is a '.dll' then we'll try and run it with NUnit.
 				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.FullName -notlike "*\packages\*"} | Where-Object {$_.Name -notlike "*$searchString.framework*"} | foreach {$_.FullName}
