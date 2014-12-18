@@ -8,7 +8,9 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "CommonFunctions.Get-NuGetPath execution" {		
+Describe "CommonFunctions.Get-NuGetPath execution" {
+
+		
 	Context "When Get-NuGetPath module is invoked with NO path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
@@ -26,7 +28,7 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
 		}
 		
 		It "Should return the full path to the bundled NuGet.exe command line" {
-            $result | Should Be "$testBasePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+            $result | Should Match "nuget.exe"
         }		
 	}
 
@@ -47,7 +49,7 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
 		}
 		
 		It "Should return the full path to the bundled NuGet.exe command line" {
-            $result | Should Be "$testBasePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+            $result | Should Match "nuget.exe"
         }			
 	}
 
@@ -68,29 +70,7 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
 		}
 		
 		It "Should return the full path to the bundled NuGet.exe command line" {
-            $result | Should Be "$testBasePath\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
-        }		
-	}
-	
-	Context "When Get-NuGetPath module is invoked with a path (-path parameter) that DOES exist" {
-		
-		Import-Module "$baseModulePath\$sut"
-		#Here we get the TestDrive using pesters $TestDrive variable which holds the full file system location to the temporary PSDrive. 
-		$testBasePath = "$TestDrive"
-
-		$result = ""
-		try {
-			$result = Get-NuGetPath -path $testBasePath
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-		
-		It "Should set the path to the supplied path" {
-            $result | Should Be "$testBasePath"
+            $result | Should Match "nuget.exe"
         }		
 	}
 
@@ -114,6 +94,39 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
 		It "Exits the module with a terminating error" {
 			$result | Should Be "Supplied path: $testBasePath does not exist" 
         }		
+	}	
+
+}
+
+Describe "CommonFunctions.Get-NuGetPath" {
+	
+	Context "When there is more than one version of NuGet.Commandline installed" {
+
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "packages" -Path $TestDrive -ItemType Directory
+		New-Item -Name "NuGet.CommandLine.2.7.2" -Path "$TestDrive\packages" -ItemType Directory
+		New-Item -Name "tools" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.2" -ItemType Directory		
+		New-Item -Name "nuget.exe" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.2\tools" -ItemType File	
+		New-Item -Name "NuGet.CommandLine.2.7.3" -Path "$TestDrive\packages" -ItemType Directory		
+		New-Item -Name "tools" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.3" -ItemType Directory		
+		New-Item -Name "nuget.exe" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.3\tools" -ItemType File			
+		$correctNugetPath = "$($TestDrive)\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+		$testBasePath = "$($TestDrive)"
+
+		$result = ""
+		try {
+			$result = Get-NuGetPath -path $testBasePath
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should return the full path to to the highest version of NuGet.Commandline found in the solution packages folder" {
+            $result | Should Be $correctNugetPath
+        }			
 	}	
 }
 
