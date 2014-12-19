@@ -5,9 +5,9 @@ OneBuild is a modular set of convention based .NET solution build scripts writte
 [![Build status](https://ci.appveyor.com/api/projects/status/8pplvimhcbrdev0l/branch/master?svg=true)](https://ci.appveyor.com/project/lholman/onebuild/branch/master)
 
 ##Building with OneBuild##
-OneBuild is shipped as a solution NuGet package, use it to build your solution by importing the NuGet package..
+OneBuild is shipped as a solution NuGet package, use it to build your solution by installing the NuGet package..
 
-```Import-Module OneBuild```
+```PM>Install-Package OneBuild```
 
 <TODO: A few notes about managing solution level NuGet packages.>
 <TODO: A few notes about Execution policies> 
@@ -50,7 +50,7 @@ Much of the logic within each phase of the build pipeline relies heavily on conv
 * You want to use NuGet for packaging up your assemblies
 
 ##Why OneBuild?##
-There are a number of benefits of having a build process that can be run in its entirety on a local (developers) machine.
+There are a number of benefits of having a build process that can be run in its entirety on a local (developers) machine. [I've written more about this before](http://lloydholman.co.uk/run-the-same-build-process-everywhere/) but here's a summary.
 
 * **Fail earlier**. Catch more failed builds earlier on by changing fewer variables, i.e. don’t compile and build in a completely different way on your Continuous Integration (CI) server than your developers do on their development machines. 
 * **Own a debuggable build process**. Building software is tricky, let me (or anyone) debug that process locally, so we don’t have to constantly break the CI builds to see things fail. 
