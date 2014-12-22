@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Onebuild by lholman</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>OneBuild conventions</h1>
+        <p>OneBuild - Convention based PowerShell build for .NET</p>
+
+        <p class="view"><a href="https://github.com/lholman/OneBuild">View OneBuild on GitHub <small>lholman/OneBuild</small></a></p>
+
+
+        <ul>
+          <li><a href="index.html"><strong>Getting started</strong></a></li>
+          <li><a href="conventions.html"><strong>OneBuild conventions</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+
+<h2>
+<a id="the-build-pipeline-and-convention" class="anchor" href="#the-build-pipeline-and-convention" aria-hidden="true"><span class="octicon octicon-link"></span></a>The build pipeline and convention</h2>
+
+<p>Much of the logic within each phase of the build pipeline relies heavily on convention, thus no configuration. Adhere to the following convention and OneBuild should just work.  </p>
+
+<h3>
+<a id="execution" class="anchor" href="#execution" aria-hidden="true"><span class="octicon octicon-link"></span></a>Execution</h3>
+
+<ul>
+<li>The OneBuild <code>OneBuild.bat</code> bootstrap script and Invoke-Build <code>OneBuild.build.ps1</code> build script <em>must</em> sit alongside the Visual Studio solution file(s) you intend to build. If you install with NuGet these are copied for you when executing <code>PM&gt; Install-Package Nunit</code> </li>
+</ul>
+
+<h3>
+<a id="invoke-unittests" class="anchor" href="#invoke-unittests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Invoke-UnitTests</h3>
+
+<ul>
+<li>To be executed with <a href="http://www.nunit.org/">NUnit</a>, NUnit test assemblies <em>must</em> 
+
+<ul>
+<li>Contain "nunit" (case-insensitive) in their assembly <em>and</em> directory names. </li>
+<li>Be output into a common output folder named \bin, regardless of Visual Studio build configuration. </li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="early-assumptions" class="anchor" href="#early-assumptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Early assumptions</h2>
+
+<ul>
+<li>You use Git for version control (TFS support coming soon)</li>
+<li>The 3 part <a href="SemVer.org">Semantic Versioning</a> style is used for all NuGet package versioning. For Git repos a global commit count (4th part) and the short commit Id (informational text) are added to the assembly versions. </li>
+<li>You use NUnit for unit testing (Support for MSTest never coming ;), but other OSS test frameworks for sure.)</li>
+<li>You want to use NuGet for packaging up your assemblies</li>
+</ul>
+
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/lholman">lholman</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
