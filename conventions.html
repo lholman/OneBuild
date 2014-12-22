@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Onebuild by lholman</title>
+    <title>OneBuild - Convention based PowerShell build for .NET</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -15,7 +15,7 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1>OneBuild conventions</h1>
+        <h1>OneBuild</h1>
         <p>OneBuild - Convention based PowerShell build for .NET</p>
 
         <p class="view"><a href="https://github.com/lholman/OneBuild">View OneBuild on GitHub <small>lholman/OneBuild</small></a></p>
@@ -28,17 +28,51 @@
       </header>
       <section>
         <h1>
+<a id="onebuild" class="anchor" href="#onebuild" aria-hidden="true"><span class="octicon octicon-link"></span></a>OneBuild conventions</h1>
 
 <h2>
-<a id="the-build-pipeline-and-convention" class="anchor" href="#the-build-pipeline-and-convention" aria-hidden="true"><span class="octicon octicon-link"></span></a>The build pipeline and convention</h2>
+<a id="the-build-pipeline" class="anchor" href="#the-build-pipeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>The build pipeline</h2>
+<p>
 
-<p>Much of the logic within each phase of the build pipeline relies heavily on convention, thus no configuration. Adhere to the following convention and OneBuild should just work.  </p>
+Orchestration of OneBuild’s build and loading of modules is handled by an <a href="https://github.com/nightroman/Invoke-Build">Invoke-Build</a> script, giving OneBuild a light weight task orientated build script. Invoke-Build has some thorough <a href="https://github.com/nightroman/Invoke-Build/wiki/Concepts">documentation about how it works and its concepts</a> for those interested in the detail.
+
+OneBuild defines and executes the following top-level tasks for each commit build
+
+<ul>
+<li><strong>Invoke-Commit</strong>: The default OneBuild task. Invoke-Commit is the entry point to and initiates the complete commit build.</li> 
+<li><strong>Invoke-HardcoreClean</strong>: Aggressively and recursively deletes all /obj and /bin folders from the build path as well as the \BuildOutput folder.</li> 
+<li><strong>Set-VersionNumber</strong>: Sets the consistent build number of the form [major].[minor].[buildCounter].[revision]. This task has a few dependent tasks that either read from or create the OneBuild VersionNumber.xml file.</li>  
+<li><strong>Invoke-Compile</strong>: Cleans and Rebuilds a Visual Studio solution file (identified by convention) to generate compiled .NET assemblies.</li> 
+<li><strong>Invoke-UnitTests</strong>: Executes all unit tests (currently only supports NUnit) for compiled .NET assemblies matching a defined naming convention, outputting results to XML file.</li> 
+<li><strong>New-Packages</strong>: Generates new Nuget ([packageName].[version].nupkg) and optional Symbols({packageName].[version].symbols.nupkg) package(s) by passing all .nuspec files found in the solution root folder.</li> 
+</ul> 
+</p>
+
+<h2>
+<a id="the-build-convention" class="anchor" href="#the-build-convention" aria-hidden="true"><span class="octicon octicon-link"></span></a>The build convention</h2>
+
+<p>Much of the logic within each task of the build pipeline relies heavily on convention, thus no configuration. Adhere to the following convention and OneBuild should just work.</p>
 
 <h3>
 <a id="execution" class="anchor" href="#execution" aria-hidden="true"><span class="octicon octicon-link"></span></a>Execution</h3>
 
 <ul>
 <li>The OneBuild <code>OneBuild.bat</code> bootstrap script and Invoke-Build <code>OneBuild.build.ps1</code> build script <em>must</em> sit alongside the Visual Studio solution file(s) you intend to build. If you install with NuGet these are copied for you when executing <code>PM&gt; Install-Package Nunit</code> </li>
+</ul>
+
+<h3>
+<a id="set-versionnumber" class="anchor" href="#set-versionnumber" aria-hidden="true"><span class="octicon octicon-link"></span></a>Set-VersionNumber</h3>
+
+<ul>
+<li>The path to your installed git.exe <em>must</em> exist within your Windows PATH variable.</li>
+</ul>
+
+<h3>
+<a id="invoke-compile" class="anchor" href="#invoke-compile" aria-hidden="true"><span class="octicon octicon-link"></span></a>Invoke-Compile</h3>
+
+<ul>
+<li>A Visual Studio solution files (.sln) <em>must</em> exist within the root folder of the solution.</li>
+<li>If there are multiple solution files, when ordered (ascending alphabetically) the first is chosen.</li>
 </ul>
 
 <h3>
@@ -54,8 +88,19 @@
 </li>
 </ul>
 
+<h3>
+<a id="new-packages" class="anchor" href="#new-packages" aria-hidden="true"><span class="octicon octicon-link"></span></a>New-Packages</h3>
+<ul>
+<li>To generate output nuget packages
+
+<ul>
+<li>One or more valid .nuspec files <em>must</em> exist within the root folder of the solution.</li>
+</ul>
+</li>
+</ul>
+
 <h2>
-<a id="early-assumptions" class="anchor" href="#early-assumptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Early assumptions</h2>
+<a id="early-assumptions" class="anchor" href="#early-assumptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Other early assumptions</h2>
 
 <ul>
 <li>You use Git for version control (TFS support coming soon)</li>
