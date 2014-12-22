@@ -43,7 +43,7 @@ Describe "New-NuGetPackagesForConfig_1" {
 	}	
 }
 
-Describe "New-NuGetPackages_2" {	
+Describe "New-NuGetPackagesForConfig_2" {	
 	Context "When there is one NuSpec file" {
 		
 		Import-Module "$baseModulePath\$sut"
