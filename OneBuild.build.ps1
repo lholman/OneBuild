@@ -157,8 +157,9 @@ task Invoke-HardcoreClean {
 
 #=================================================================================================
 # Synopsis: Runs the Pester (https://github.com/pester/Pester) based unit tests for OneBuild
+# Pre-condition: Will only run dependent tasks if we're not building in Debug mode (locally).
 #=================================================================================================
-task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
+task Invoke-OneBuildUnitTests {
 	
 	$pesterPath = Get-ChildItem "$BuildRoot\packages" | Where-Object {$_.Name -like 'pester*'} | Where-Object {$_.PSIsContainer -eq $True} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
 	
@@ -176,4 +177,8 @@ task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
 	finally {
 		Remove-Module Pester
 	}
+}
+
+task BeforeInvoke-OneBuildUnitTests -Before Invoke-OneBuildUnitTests -If {($configuration -ne "Debug")} Invoke-HardcoreClean, New-Packages, {
+
 }
