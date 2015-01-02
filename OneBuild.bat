@@ -7,6 +7,7 @@ rem setting defaults
 SET TASK=Invoke-Commit
 SET CONFIGURATION=Debug
 SET BUILDCOUNTER=999
+SET TESTNAME=*
 
 
 :PARAM_LOOP_START
@@ -19,6 +20,8 @@ IF [%1] == [-task] (
 	SET BUILDCOUNTER=%2
 ) ELSE IF [%1] == [-configuration] (
 	SET CONFIGURATION=%2
+) ELSE IF [%1] == [-testname] (
+	SET TESTNAME=%2
 	SHIFT /1
 )
 SHIFT /1
@@ -29,8 +32,9 @@ GOTO PARAM_LOOP_START
 ECHO task = %TASK%
 ECHO configuration = %CONFIGURATION%
 ECHO buildcounter = %BUILDCOUNTER%
+ECHO testName = %TESTNAME%
 
-powershell -NoProfile -ExecutionPolicy bypass -command "$invokeBuildPath = Get-ChildItem packages | Where-Object {$_.Name -like 'Invoke-Build*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}; Write-Host """Found Invoke-Build at: $invokeBuildPath"""; & {& $invokeBuildPath\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% .\OneBuild.build.ps1}" 
+powershell -NoProfile -ExecutionPolicy bypass -command "$invokeBuildPath = Get-ChildItem packages | Where-Object {$_.Name -like 'Invoke-Build*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}; Write-Host """Found Invoke-Build at: $invokeBuildPath"""; & {& $invokeBuildPath\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% -testName %TESTNAME% .\OneBuild.build.ps1}" 
 
 IF %ERRORLEVEL% == 0 GOTO OK
 ECHO ##teamcity[buildStatus status='FAILURE' text='{build.status.text} in execution']

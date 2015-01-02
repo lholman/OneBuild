@@ -9,7 +9,8 @@
 [CmdletBinding()]
 param(
 	$configuration = "Debug",
-	$buildCounter = "999"
+	$buildCounter = "999",
+	$testName = "*"
 )
 
 $DebugPreference = "Continue"
@@ -168,7 +169,7 @@ task Invoke-OneBuildUnitTests {
 	Import-Module "$pesterPath\tools\Pester.psm1"
 	$result
 	try {
-		$result = Invoke-Pester -Path "$BuildRoot\tests" -PassThru -OutputXml $BuildRoot\TestResult.xml
+		$result = Invoke-Pester -Path "$BuildRoot\tests\" -TestName $testName -PassThru -OutputXml $BuildRoot\TestResult.xml
 		assert ($result.FailedCount -eq 0) "$($result.FailedCount) OneBuild unit test(s) failed."
 	}
 	catch {
