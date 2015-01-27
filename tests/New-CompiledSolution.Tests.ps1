@@ -8,7 +8,7 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "New-CompiledSolution" {
+Describe "New-CompiledSolution. Check for solution files" {
 	Context "When there is a solution file" {
 	
 		Import-Module "$baseModulePath\$sut"
@@ -65,11 +65,12 @@ Describe "New-CompiledSolution" {
 	}
 }
 
-Describe "Select the correct MSBuild version to use for compilation" {
-	Context "When there is a solution file" {
+Describe "New-CompiledSolution. Select the correct MSBuild version to use for compilation" {
+	Context "When there are multiple versions of MSBuild available" {
 	
 		Import-Module "$baseModulePath\$sut"
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
+		Mock -ModuleName $sut Get-LatestMSBuildPath
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { }
 		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
@@ -87,17 +88,10 @@ Describe "Select the correct MSBuild version to use for compilation" {
 			Remove-Module $sut
 		}
 		
-		It "Should call Restore-SolutionNuGetPackages to restore the solution NuGet packages" {
-            Assert-MockCalled Restore-SolutionNuGetPackages -ModuleName $sut -Times 1
+		It "Should call Get-LatestMSBuildPath and return the path to the latest version of MSBuild" {
+            Assert-MockCalled Get-LatestMSBuildPath -ModuleName $sut -Times 1
         }
 		
-		It "Should call Invoke-MsBuildCompilationForSolution to compile the solution with MSBuild" {
-            Assert-MockCalled Invoke-MsBuildCompilationForSolution -ModuleName $sut -Times 1
-        }	
-
-		It "Should write a descriptive warning about configuration mode" {
-			Assert-VerifiableMocks 
-		}	
 	}
 
 }

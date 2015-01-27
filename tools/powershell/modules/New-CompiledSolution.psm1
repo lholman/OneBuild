@@ -48,6 +48,8 @@ function New-CompiledSolution{
 				{
 					$basePath = Confirm-Path -path $path
 				
+					Get-LatestMSBuildPath
+					
 					$nuGetPath = Set-NuGetPath $nuGetPath
 
 					$solutionFile = Get-FirstSolutionFile
@@ -74,6 +76,10 @@ function New-CompiledSolution{
 				
 				return
 		}
+}
+
+function Get-LatestMSBuildPath {
+
 }
 
 function Confirm-Path {
