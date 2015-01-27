@@ -50,20 +50,27 @@ task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, {
 #=================================================================================================
 task New-Packages Set-VersionNumber, {
 
-	if ($assemblyInformationalVersion -ne "")
-	{
-		$versionLabels = $assemblyInformationalVersion.Split(".")
-		$nuGetPackageVersion = $versionLabels[0] + "." + $versionLabels[1] + "." + $versionLabels[2]
-	}
-	else
-	{
-		$nuGetPackageVersion = "$major.$minor.$buildCounter"
-	}
+	try {
+		if ($assemblyInformationalVersion -ne "")
+		{
+			$versionLabels = $assemblyInformationalVersion.Split(".")
+			$nuGetPackageVersion = $versionLabels[0] + "." + $versionLabels[1] + "." + $versionLabels[2]
+		}
+		else
+		{
+			$nuGetPackageVersion = "$major.$minor.$buildCounter"
+		}
 
-	Write-Output "Will use version: $nuGetPackageVersion to build NuGet package"
-	Import-Module "$baseModulePath\New-NuGetPackages.psm1"
-	New-NuGetPackages -versionNumber $nuGetPackageVersion
-	Remove-Module New-NuGetPackages
+		Write-Output "Will use version: $nuGetPackageVersion to build NuGet package"
+		Import-Module "$baseModulePath\New-NuGetPackages.psm1"
+		New-NuGetPackages -versionNumber $nuGetPackageVersion
+	}
+	catch {
+		throw
+	}
+	finally {
+		Remove-Module New-NuGetPackages
+	}	
 }
 
 #=================================================================================================

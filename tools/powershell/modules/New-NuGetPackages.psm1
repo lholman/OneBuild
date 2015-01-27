@@ -52,7 +52,6 @@ function New-NuGetPackages{
 				if ($specFilePaths -eq $null)
 				{
 					Write-Warning "No NuGet '.nuspec' file found matching the packaging naming convention, exiting without NuGet packaging."
-					return 0
 				}
 				
 				if ((Test-Path -Path "$basePath\BuildOutput") -eq $False) 
@@ -78,16 +77,14 @@ function New-NuGetPackages{
 						
 						if ($result) 
 						{
-							Write-Error "Whilst executing NuGet Pack on spec file $specFilePath, NuGet.exe exited with error message: $result"
-							Return 1
+							throw "An error occurred whilst executing Nuget Pack for the .nuspec file: $specFilePath. Nuget.exe exited with error message: $result"
+							
 						}
 					}
 					
-					Return 0
 				}
 				catch [Exception] {
-					throw "Error executing NuGet Pack for supplied spec file: $specFilePath using NuGet from: $nuGetPath `r`n $_.Exception.ToString()"
-					Return 1
+					throw "An unexpected error occurred whilst executing Nuget Pack for the .nuspec file: $specFilePath. Nuget.exe path: $nuGetPath nuget.exe. Nuget.exe exited with error message: `r`n $_"
 				}
 		}
 }
