@@ -147,7 +147,7 @@ function Invoke-MsBuildCompilationForSolution {
 			[string]$configMode				
 	)
 	Write-Warning "Building '$($solutionFile)' in '$($configMode)' mode"
-	$output = & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1 
+	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
 	
 	#$err = $output | ? {$_.GetType().Name -eq "ErrorRecord"}
 	
