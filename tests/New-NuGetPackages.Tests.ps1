@@ -8,7 +8,7 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "New-NuGetPackages_1" {
+Describe "New-NuGetPackages_NoFiles" {
 
 	Context "When there are NO NuSpec file(s)" {
 		
@@ -35,12 +35,14 @@ Describe "New-NuGetPackages_1" {
 		It "Write a descriptive warning" {
 			Assert-VerifiableMocks
 		}
-	}	
+	}
+}
 	
+Describe "New-NuGetPackages_OneFile" {
 	Context "When there is one NuSpec file" {
 		
 		Import-Module "$baseModulePath\$sut"
-		Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
+        Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
 		Mock -ModuleName $sut Invoke-NuGetPack {return 0} -Verifiable
 
 		try {
@@ -60,11 +62,13 @@ Describe "New-NuGetPackages_1" {
             Assert-MockCalled Invoke-NuGetPack -ModuleName $sut -Times 1
         }
 	}
-	
+}
+
+Describe "New-NuGetPackages_Symbols" {	
 	Context "When includeSymbolsPackage switch parameter is passed" {
 		
 		Import-Module "$baseModulePath\$sut"
-		Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
+        Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
 		Mock -ModuleName $sut Invoke-NuGetPackWithSymbols {return 0} -Verifiable
 		
 		try {
@@ -81,7 +85,9 @@ Describe "New-NuGetPackages_1" {
             Assert-MockCalled Invoke-NuGetPackWithSymbols -ModuleName $sut -Times 1
         }
 	}
+}
 
+Describe "New-NuGetPackages_Errors" {	
 	Context "When there is an error generating a NuGet package" {
 		
 		Import-Module "$baseModulePath\$sut"
@@ -111,6 +117,7 @@ Describe "New-NuGetPackages_1" {
         }		
 	}		
 }
+
 Describe "New-NuGetPackages_2" {
 	Context "When there are 2 NuSpec files" {
 		
@@ -136,11 +143,8 @@ Describe "New-NuGetPackages_2" {
 	
 }
 
-
 $module = Get-Module $sut
 if ($module -ne $null)
 {
 	Remove-Module $sut
 }
-
-
