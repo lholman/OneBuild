@@ -1,0 +1,5 @@
+# Config Transformation Tool #
+
+[October 2013 Release](http://ctt.codeplex.com/releases/view/113897)
+
+Config Transform Tool is built on top of the [open sourced XDT XML Document Transform library from Microsoft](http://blogs.msdn.com/b/webdev/archive/2013/04/23/xdt-xml-document-transform-released-on-codeplex-com.aspx) 
