@@ -44,7 +44,7 @@ function New-CompiledSolution{
 			$DebugPreference = "Continue"
 			if (-not $PSBoundParameters.ContainsKey('Verbose'))
 			{
-			$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
+				$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
 			}
 		}	
 	Process {
@@ -75,7 +75,6 @@ function New-CompiledSolution{
 					{
 						throw "Whilst executing MsBuild for solution file $solutionFile, MsBuild.exe exited with error message: $result"
 					}
-				
 				}
 				catch [Exception] {
 					throw "Error compiling solution file: $solutionFile. `r`n $_"
@@ -159,11 +158,6 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$configMode				
 	)
-<<<<<<< HEAD
-=======
-	Write-Warning "Building '$($solutionFile)' in '$($configMode)' mode"
-	$output = & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1 
->>>>>>> 1c5a212034d7abe7e22cdd1929b403f9cf501d48
 	
 	Write-Verbose "Building '$($solutionFile)' in '$($configMode)' mode"
 	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
@@ -173,7 +167,7 @@ function Invoke-MsBuildCompilationForSolution {
 		return $output
 	}
 	$VerbosePreference = "Continue"
-	Write-Verbose $output
+	Write-Verbose ($output | Out-String)
 	return
 }
 
