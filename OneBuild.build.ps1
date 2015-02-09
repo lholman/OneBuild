@@ -13,8 +13,12 @@ param(
 )
 
 $DebugPreference = "SilentlyContinue"
-#$VerbosePreference = "SilentlyContinue"
 $WarningPreference = "Continue"
+
+if ($PSBoundParameters.ContainsKey('Verbose'))
+{
+	$VerbosePreference = "Continue"
+}
 
 if ((Test-Path -path "$BuildRoot\tools\powershell\modules" ) -eq $True)
 {
@@ -96,7 +100,7 @@ task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 		New-CompiledSolution -configMode $configuration
 	}
 	catch {
-		throw
+		throw $_
 	}
 	finally {
 		Remove-Module New-CompiledSolution
@@ -122,14 +126,14 @@ task Read-MajorMinorVersionNumber -If { ($major -eq $null) -and ($minor -eq $nul
 	{
 		#Retrieve the [major] and [minor] version numbers from the $($versionNumberFileName) file
 		[xml]$x = Get-Content "$BuildRoot\$($versionNumberFileName)"
-		Write-Warning "$($versionNumberFileName) file found, reading to set [major] and [minor] version numbers."
+		Write-Output "$($versionNumberFileName) file found, reading to set [major] and [minor] version numbers."
 		$script:major = $x.version.major
-		Write-Warning "Setting [major] version number to: $($script:major)."
+		Write-Output "Setting [major] version number to: $($script:major)."
 		$script:minor = $x.version.minor
-		Write-Warning "Setting [minor] version number to: $($script:minor)."
+		Write-Output "Setting [minor] version number to: $($script:minor)."
 
 	}else{
-		Write-Error "No $BuildRoot\$($versionNumberFileName) file found. Maybe you've forgotten to check it in?"
+		throw "No $BuildRoot\$($versionNumberFileName) file found. Maybe you've forgotten to check it in?"
 	}
 }
 

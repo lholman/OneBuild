@@ -42,6 +42,10 @@ function New-CompiledSolution{
 			)			
 	Begin {
 			$DebugPreference = "Continue"
+			if (-not $PSBoundParameters.ContainsKey('Verbose'))
+			{
+				$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
+			}
 		}	
 	Process {
 				Try 
@@ -71,7 +75,6 @@ function New-CompiledSolution{
 					{
 						throw "Whilst executing MsBuild for solution file $solutionFile, MsBuild.exe exited with error message: $result"
 					}
-				
 				}
 				catch [Exception] {
 					throw "Error compiling solution file: $solutionFile. `r`n $_"
@@ -141,9 +144,10 @@ function Restore-SolutionNuGetPackages {
 	{
 		return $err
 	}
-	
+
 	#As we've re-directed error output to standard output (stdout) using '2>&1', so that we can save it to a variable, we have effectively suppressed stdout, therefore we write $output to the Verbose stream here. 
-	Write-Verbose $output
+	$VerbosePreference = "Continue"
+	Write-Verbose ($output | Out-String)
 	return
 }
 
@@ -154,16 +158,16 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$configMode				
 	)
-
+	
 	Write-Verbose "Building '$($solutionFile)' in '$($configMode)' mode"
-	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
+	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
 	
 	if ($LASTEXITCODE -eq 1)
 	{
 		return $output
 	}
-
-	Write-Warning $output
+	$VerbosePreference = "Continue"
+	Write-Verbose ($output | Out-String)
 	return
 }
 
