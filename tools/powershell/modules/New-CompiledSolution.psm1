@@ -159,6 +159,11 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$configMode				
 	)
+<<<<<<< HEAD
+=======
+	Write-Warning "Building '$($solutionFile)' in '$($configMode)' mode"
+	$output = & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1 
+>>>>>>> 1c5a212034d7abe7e22cdd1929b403f9cf501d48
 	
 	Write-Verbose "Building '$($solutionFile)' in '$($configMode)' mode"
 	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
