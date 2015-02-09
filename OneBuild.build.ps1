@@ -12,7 +12,9 @@ param(
 	$buildCounter = "999"
 )
 
-$DebugPreference = "Continue"
+$DebugPreference = "SilentlyContinue"
+#$VerbosePreference = "SilentlyContinue"
+$WarningPreference = "Continue"
 
 if ((Test-Path -path "$BuildRoot\tools\powershell\modules" ) -eq $True)
 {
