@@ -13,6 +13,8 @@ function Invoke-NUnitTestsForAllProjects{
 	Optional. The full path to nunit-console.exe.  Defaults to 'packages\NUnit.Runners.2.6.3\tools\nunit-console.exe', i.e. the bundled version of NUnit.
 .PARAMETER searchString
 	Optional. Defines the string to match within assembly filenames, determining which assemblies are executed. Defaults to 'test'.
+.PARAMETER sendTeamCityServiceMessage
+    Optional. Instructs the module to send a TeamCity formatted service message containing location of the test results. Defaults to $true.
 .EXAMPLE 
 	Import-Module Invoke-NUnitTestsForProject
 	Import the module
@@ -33,7 +35,10 @@ function Invoke-NUnitTestsForAllProjects{
 				$nUnitPath,
 			[Parameter(Mandatory = $False )]
 				[string]
-				$searchString = "nunit"			
+				$searchString = "nunit",
+			[Parameter(Mandatory = $False )]
+        		[string]
+        		$sendTeamCityServiceMessage = $true				
 			)
 	Begin {
 			$DebugPreference = "Continue"
@@ -76,17 +81,19 @@ function Invoke-NUnitTestsForAllProjects{
 				}
 				
 				$i = 1	
-				foreach($testAssemblyPath in $testAssemblyPaths)
-				{
+				foreach($testAssemblyPath in $testAssemblyPaths) {
 													
 					$testResultFileName = "TestResult_$($searchString)_$i.xml"
 
-					Try 
-					{	
+					Try {	
 							Write-Host "Executing Tests for test assembly: $testAssemblyPath"
 							Write-Debug "Using NUnit-Console Path: $nUnitPath and result file: $testResultFileName"
 							& $nUnitPath $testAssemblyPath /result=$testResultFileName
-							
+                
+                            if ($sendTeamCityServiceMessage -eq $true)	{
+				            	# Tells TeamCity to pick up the test results
+				                Write-Host "##teamcity[importData type='nunit' path='$testResultFileName']"
+				            }							
 					}
 					catch [Exception] {
 						throw "Error executing Tests for supplied assembly: $testAssemblyPath using NUnit from: $nUnitPath `r`n $_.Exception.ToString()"
