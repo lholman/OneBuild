@@ -46,9 +46,12 @@ function Transform-ConfigFile{
 	Process {
 
 				Write-Verbose "Starting: Transform-ConfigFile"
-
-				$basePath = Confirm-Path -path ""
-
+				Try {
+					$basePath = Confirm-Path -path ""
+				}
+				Catch{
+					throw $_
+				}
 				if (!(Test-Path -LiteralPath "$sourceFile"))
 				{
 					throw "Source file: $sourceFile does not exist."
@@ -67,8 +70,8 @@ function Transform-ConfigFile{
 					$outputFile = "$basePath\$transformedFilesFolder\$($sourceFile.Name)"
 				}
 
-				Write-Verbose "Using source XML file: $source"
-				Write-Verbose "Using XSLT transform file: $transform"
+				Write-Verbose "Using source XML file: $sourceFile"
+				Write-Verbose "Using XSLT transform file: $transformFile"
 				Write-Verbose "Setting transformed output XML file to: $outputFile"
 				
 				if ($cttPath -eq "")
@@ -92,15 +95,15 @@ function Confirm-Path {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
-				[string]$sourceFile			
+				[string]$path			
 		)	
 	Import-Module "$PSScriptRoot\Get-Path.psm1"
 	Try {
-		$sourceFile = Get-Path -path $sourceFile
-		return $sourceFile
+		$path = Get-Path -path $path
+		return $path
 	}
-	Catch [Exception] {
-		throw
+	Catch {
+		throw $_
 	}
 	Finally {
 		Remove-Module Get-Path
@@ -116,7 +119,7 @@ function Invoke-ConfigTransformationTool {
 		[Parameter(Mandatory = $True )]
 			[string]$outputFile,
 		[Parameter(Mandatory = $True )]
-			[string]$cttPath,			
+			[string]$cttPath		
 	)
 	
 	<#								

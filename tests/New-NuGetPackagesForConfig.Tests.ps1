@@ -109,10 +109,6 @@ Describe "New-NuGetPackages_3" {
 	}	
 }
 
-Context "Next" {
-
-}
-
 $module = Get-Module $sut
 if ($module -ne $null)
 {
