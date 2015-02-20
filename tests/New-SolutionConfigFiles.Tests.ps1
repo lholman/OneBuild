@@ -14,9 +14,9 @@ Describe "New-SolutionConfigFiles" {
 	
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\[config]" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"	
-		Mock -ModuleName $sut Get-ChildConfigFolders { return "$testBasePath\Project1\[config]"}
+		Mock -ModuleName $sut Get-ChildConfigFolders { return "$testBasePath\Project1\_config"}
 		Mock -ModuleName $sut New-ConfigTransformsForConfigPath { }
 
 		try {
@@ -29,7 +29,7 @@ Describe "New-SolutionConfigFiles" {
 			Remove-Module $sut
 		}
 		
-		It "Should call Get-ChildConfigFolders to identify all [config] folders under path" {
+		It "Should call Get-ChildConfigFolders to identify all _config folders under path" {
             Assert-MockCalled Get-ChildConfigFolders -ModuleName $sut -Times 1
         }
 		
@@ -41,13 +41,13 @@ Describe "New-SolutionConfigFiles" {
 	
 }
 
-Describe "New-SolutionConfigFiles one [config] folder" {
+Describe "New-SolutionConfigFiles one _config folder" {
 
-	Context "When there is one [config] folder under the path folder" {
+	Context "When there is one _config folder under the path folder" {
 	
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\[config]" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"
 		Mock -ModuleName $sut New-ConfigTransformsForConfigPath { }
 		
@@ -61,7 +61,7 @@ Describe "New-SolutionConfigFiles one [config] folder" {
 			Remove-Module $sut
 		}
 		
-		It "Should identify one [config] folder" {
+		It "Should identify one _config folder" {
             #Assert-MockCalled Get-ChildConfigFolders -ModuleName $sut -Times 1
         }
 		
@@ -73,15 +73,15 @@ Describe "New-SolutionConfigFiles one [config] folder" {
 	
 }
 
-Describe "New-SolutionConfigFiles multiple [config] folders" {
+Describe "New-SolutionConfigFiles multiple _config folders" {
 
-	Context "When there are multiple [config] folders under the path folder" {
+	Context "When there are multiple _config folders under the path folder" {
 	
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\[config]" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project2" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project2\[config]" -Path $TestDrive -ItemType Directory		
+		New-Item -Name "Project2\_config" -Path $TestDrive -ItemType Directory		
 		$testBasePath = "$TestDrive"	
 		Mock -ModuleName $sut New-ConfigTransformsForConfigPath { }
 
@@ -99,8 +99,64 @@ Describe "New-SolutionConfigFiles multiple [config] folders" {
             Assert-MockCalled New-ConfigTransformsForConfigPath -ModuleName $sut -Times 2
         }
 
-	}
+	}	
+}
+
+Describe "New-SolutionConfigFiles application configuration" {
+
+	Context "When there is an application folder" {
 	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType Directory	
+		$testBasePath = "$TestDrive"	
+		Mock -ModuleName $sut Confirm-ApplicationFolderExistsForConfigPath { } -Verifiable
+		
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should call Confirm-ApplicationFolderExistsForConfigPath once" {
+            Assert-MockCalled Confirm-ApplicationFolderExistsForConfigPath -ModuleName $sut -Times 1
+        }
+
+	}	
+}
+
+Describe "New-SolutionConfigFiles application configuration" {
+
+	Context "When there is NO application folder" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
+		$testBasePath = "$TestDrive"	
+		
+		$result = $null
+		try {
+			$result = New-SolutionConfigFiles -path "$testBasePath\Project1" -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "No 'application' folder found under path: $testBasePath\Project1\_config, please remove the _config folder or add a child 'application' folder." -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}
+
+	}	
 }
 
 $module = Get-Module $sut

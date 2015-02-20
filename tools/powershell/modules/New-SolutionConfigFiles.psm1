@@ -2,11 +2,11 @@ function New-SolutionConfigFiles{
 <#
  
 .SYNOPSIS
-    Identifies all [config] paths under the given solution path.
+    Identifies all _config paths under the given solution path.
 .DESCRIPTION
-    Identifies all [config] paths under the given solution path
+    Identifies all _config paths under the given solution path
 .PARAMETER path
-	Optional. The full path to the Visual Studio Solution parent folder to look for [config] folders in.  Defaults to the calling scripts path.	
+	Optional. The full path to the Visual Studio Solution parent folder to look for _config folders in.  Defaults to the calling scripts path.	
 .EXAMPLE 
 	Import-Module New-SolutionConfigFiles
 	Import the module
@@ -37,7 +37,7 @@ function New-SolutionConfigFiles{
 				 		$configPaths = Get-ChildConfigFolders -path $basePath
 						#Write-Host $configPaths.GetType()
 						$numberOfConfigPaths = $configPaths.Count 
-						Write-Verbose "New-SolutionConfigFiles: Found $numberOfConfigPaths [config] path(s)."
+						Write-Verbose "New-SolutionConfigFiles: Found $numberOfConfigPaths _config path(s)."
 						
 						ForEach ($configPath in $configPaths)
 						{
@@ -76,8 +76,8 @@ function Get-ChildConfigFolders {
 				Mandatory = $False )]
 				[string]$path			
 		)	
-	#Convention: Get the full path to all [config] folders under the supplied path. 
-	return Get-ChildItem $path -recurse | Where-Object {$_.Name -eq '[config]'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName}
+	#Convention: Get the full path to all _config folders under the supplied path. 
+	return Get-ChildItem $path -recurse | Where-Object {$_.Name -eq '_config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName}
 }
 
 function New-ConfigTransformsForConfigPath {
@@ -87,7 +87,24 @@ function New-ConfigTransformsForConfigPath {
 				[string]$path			
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
-		
+	Confirm-ApplicationFolderExistsForConfigPath -path $path
+	
+	
+	
+}
+
+function Confirm-ApplicationFolderExistsForConfigPath {
+	Param(			
+			[Parameter(
+				Mandatory = $False )]
+				[string]$path			
+		)	
+	
+	if (-not(Test-Path "$path\application"))
+	{
+		throw "No 'application' folder found under path: $path, please remove the _config folder or add a child 'application' folder."
+	}
+	return
 }
 
 Export-ModuleMember -Function New-SolutionConfigFiles
