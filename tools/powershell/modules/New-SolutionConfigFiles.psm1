@@ -86,7 +86,7 @@ function New-ConfigTransformsForConfigPath {
 				Mandatory = $False )]
 				[string]$path			
 		)	
-		
+	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
 		
 }
 
