@@ -35,7 +35,13 @@ function New-SolutionConfigFiles{
 						$basePath = Confirm-Path -path $path
 
 				 		$configPaths = Get-ChildConfigFolders -path $basePath
-						#Write-Host $configPaths.GetType()
+
+						if ($configPaths -eq $null)
+						{
+							Write-Warning "No configuration '_config' folders found, exiting without configuration  transformation."
+							return
+						}						
+						
 						$numberOfConfigPaths = $configPaths.Count 
 						Write-Verbose "New-SolutionConfigFiles: Found $numberOfConfigPaths _config path(s)."
 						
@@ -88,8 +94,6 @@ function New-ConfigTransformsForConfigPath {
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
 	$baseConfigFile = Confirm-BaseConfigFileExistsForConfigPath -path $path
-	
-	
 	
 }
 

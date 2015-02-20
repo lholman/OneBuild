@@ -39,6 +39,32 @@ Describe "New-SolutionConfigFiles" {
 
 	}
 	
+	Context "When there is NO configuration to transform" {
+	
+		Import-Module "$baseModulePath\$sut"
+
+		Mock -ModuleName $sut Get-ChildConfigFolders { return $null}
+		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
+            $Message -eq "No configuration '_config' folders found, exiting without configuration  transformation."
+        }
+				
+		try {
+			New-SolutionConfigFiles -verbose
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Write a descriptive warning" {
+			Assert-VerifiableMocks
+		}
+		
+
+	}	
+	
 }
 
 Describe "New-SolutionConfigFiles one _config folder" {
