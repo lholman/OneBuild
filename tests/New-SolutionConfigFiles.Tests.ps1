@@ -61,15 +61,12 @@ Describe "New-SolutionConfigFiles" {
 		It "Write a descriptive warning" {
 			Assert-VerifiableMocks
 		}
-		
-
 	}	
-	
 }
 
-Describe "New-SolutionConfigFiles one _config folder" {
+Describe "New-SolutionConfigFiles one project _config folder" {
 
-	Context "When there is one _config folder under the path folder" {
+	Context "When there is one project _config folder under the path folder" {
 	
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
@@ -94,14 +91,12 @@ Describe "New-SolutionConfigFiles one _config folder" {
 		It "Should call New-ConfigTransformsForConfigPath once" {
             Assert-MockCalled New-ConfigTransformsForConfigPath -ModuleName $sut -Times 1
         }
-
 	}
-	
 }
 
-Describe "New-SolutionConfigFiles multiple _config folders" {
+Describe "New-SolutionConfigFiles multiple project _config folders" {
 
-	Context "When there are multiple _config folders under the path folder" {
+	Context "When there are multiple project _config folders under the path folder" {
 	
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
@@ -177,6 +172,31 @@ Describe "New-SolutionConfigFiles application configuration" {
 			$result | Should Match $expectedErrorMessage
 		}
 	}	
+	
+	Context "When there is NO child XSLT transform file" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
+		$testBasePath = "$TestDrive"			
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
+		try {
+			$result = New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "No child transform" -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}
+	}	
 
 	Context "When there is an application folder" {
 	
@@ -184,7 +204,7 @@ Describe "New-SolutionConfigFiles application configuration" {
 		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
 		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
 		$testBasePath = "$TestDrive"	
-		Mock -ModuleName $sut Get-BaseConfigFileForConfigPath { } -Verifiable
+		#Mock -ModuleName $sut Get-ChildTransformPathsForConfigPath { } -Verifiable
 		
 		try {
 			New-SolutionConfigFiles -path $testBasePath -verbose
@@ -196,35 +216,11 @@ Describe "New-SolutionConfigFiles application configuration" {
 			Remove-Module $sut
 		}
 		
-		It "Should call Get-BaseConfigFileForConfigPath once" {
-            Assert-MockCalled Get-BaseConfigFileForConfigPath -ModuleName $sut -Times 1
+		It "Should call Get-ChildTransformPathsForConfigPath once" {
+            #Assert-MockCalled Get-ChildTransformPathsForConfigPath -ModuleName $sut -Times 1
         }
 	}	
 	
-	Context "When there is NO environment XSLT transform environment file" {
-		
-		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
-		New-Item -Name "Project1\_config\application\Environment1" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "Project1\_config\application\Environment1\transform.xslt" -Path $TestDrive -ItemType File			
-		Import-Module "$baseModulePath\$sut"
-		
-		$result = $null
-		try {
-			$result = New-SolutionConfigFiles -path "$testBasePath\Project1" -verbose
-		}
-		catch {
-			$result = $_
-		}
-		finally {
-			Remove-Module $sut
-		}
-		
-		#It "Exits the module with a descriptive terminating error" {
-			#$expectedErrorMessage = "No environment XSLT transform file found under path: $testBasePath\Project1\_config\application\Environment1, please remove the '_config\application\Environment1' folder or add an XSLT transform file." -replace "\\","\\"			
-			#$result | Should Match $expectedErrorMessage
-		#}
-	}		
 }
 
 $module = Get-Module $sut

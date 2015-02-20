@@ -95,7 +95,7 @@ function New-ConfigTransformsForConfigPath {
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
 	$baseConfigFile = Get-BaseConfigFileForConfigPath -path $path
 	
-	Get-EnvironmentTransformForConfigPath -path (Split-Path $baseConfigFile -Parent)
+	$childTransformPaths = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigFile -Parent)
 	
 }
 
@@ -119,19 +119,27 @@ function Get-BaseConfigFileForConfigPath {
 		throw "No XML base config file found under path: $path\application, please remove the '_config\application' folder or add a base XML config file."
 	}	
 	
+	Write-Verbose "New-SolutionConfigFiles: Found base config file: $baseConfigFile"
 	return $baseConfigFile
 }
 
-function Get-EnvironmentTransformForConfigPath {
+function Get-ChildTransformPathsForConfigPath {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
 				[string]$path			
 		)	
+
+	$childTransformPaths = Get-ChildItem $path | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
 		
-		Get-ChildItem $path | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+	if ([bool]$childTransformPaths) #Check IsNullOrEmpty
+	{
+		#$applicationFolderName = $path.Split('\')
+		#$applicationFolderName = $applicationFolderName[$applicationFolderName.Count -1]
+		throw "No child transform folder(s) found under 'application' path: $path, please add a new child transform folder and transform file."
+	}	
 	
-	return 
+	return $childTransformPaths
 }
 
 Export-ModuleMember -Function New-SolutionConfigFiles

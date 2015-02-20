@@ -168,7 +168,7 @@ task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
 	$result
 	try {
 		#$result = Invoke-Pester -Path "$BuildRoot\tests\" -PassThru -OutputXml $BuildRoot\TestResult.xml
-		$result = Invoke-Pester -Path "$BuildRoot\tests\" -TestName "New-SolutionConfigFiles*" -PassThru -OutputXml $BuildRoot\TestResult.xml
+		$result = Invoke-Pester -Path "$BuildRoot\tests\" -PassThru -OutputXml $BuildRoot\TestResult.xml
 		assert ($result.FailedCount -eq 0) "$($result.FailedCount) OneBuild unit test(s) failed."
 	}
 	catch {
