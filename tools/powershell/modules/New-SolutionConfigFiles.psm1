@@ -34,7 +34,15 @@ function New-SolutionConfigFiles{
 				Try {
 						$basePath = Confirm-Path -path $path
 
-				 		Get-ChildConfigFolders -path $basePath
+				 		$configPaths = Get-ChildConfigFolders -path $basePath
+						#Write-Host $configPaths.GetType()
+						$numberOfConfigPaths = $configPaths.Count 
+						Write-Verbose "New-SolutionConfigFiles: Found $numberOfConfigPaths [config] path(s)."
+						
+						ForEach ($configPath in $configPaths)
+						{
+							New-ConfigTransformsForConfigPath -path $configPath							
+						}
 					
 				} catch [Exception] {
 					throw "An error occurred generating config files under path: $basePath. `r`n $_"
@@ -69,7 +77,17 @@ function Get-ChildConfigFolders {
 				[string]$path			
 		)	
 	#Convention: Get the full path to all [config] folders under the supplied path. 
-	return Get-ChildItem $path -recurse | Where-Object {$_.Name -eq '[config]'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object 
+	return Get-ChildItem $path -recurse | Where-Object {$_.Name -eq '[config]'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName}
+}
+
+function New-ConfigTransformsForConfigPath {
+	Param(			
+			[Parameter(
+				Mandatory = $False )]
+				[string]$path			
+		)	
+		
+		
 }
 
 Export-ModuleMember -Function New-SolutionConfigFiles
