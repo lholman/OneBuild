@@ -129,35 +129,6 @@ Describe "New-SolutionConfigFiles multiple _config folders" {
 }
 
 Describe "New-SolutionConfigFiles application configuration" {
-
-	Context "When there is an application folder" {
-	
-		Import-Module "$baseModulePath\$sut"
-		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType Directory	
-		$testBasePath = "$TestDrive"	
-		Mock -ModuleName $sut Confirm-BaseConfigFileExistsForConfigPath { } -Verifiable
-		
-		try {
-			New-SolutionConfigFiles -path $testBasePath -verbose
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-		
-		It "Should call Confirm-BaseConfigFileExistsForConfigPath once" {
-            Assert-MockCalled Confirm-BaseConfigFileExistsForConfigPath -ModuleName $sut -Times 1
-        }
-
-	}	
-}
-
-Describe "New-SolutionConfigFiles application configuration" {
 	
 	New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
 	New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
@@ -205,7 +176,54 @@ Describe "New-SolutionConfigFiles application configuration" {
 			$expectedErrorMessage = "No XML base config file found under path: $testBasePath\Project1\_config\application, please remove the '_config\application' folder or add a base XML config file." -replace "\\","\\"			
 			$result | Should Match $expectedErrorMessage
 		}
+	}	
 
+	Context "When there is an application folder" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
+		$testBasePath = "$TestDrive"	
+		Mock -ModuleName $sut Get-BaseConfigFileForConfigPath { } -Verifiable
+		
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should call Get-BaseConfigFileForConfigPath once" {
+            Assert-MockCalled Get-BaseConfigFileForConfigPath -ModuleName $sut -Times 1
+        }
+	}	
+	
+	Context "When there is NO environment XSLT transform environment file" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Environment1" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "Project1\_config\application\Environment1\transform.xslt" -Path $TestDrive -ItemType File			
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
+		try {
+			$result = New-SolutionConfigFiles -path "$testBasePath\Project1" -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		#It "Exits the module with a descriptive terminating error" {
+			#$expectedErrorMessage = "No environment XSLT transform file found under path: $testBasePath\Project1\_config\application\Environment1, please remove the '_config\application\Environment1' folder or add an XSLT transform file." -replace "\\","\\"			
+			#$result | Should Match $expectedErrorMessage
+		#}
 	}		
 }
 

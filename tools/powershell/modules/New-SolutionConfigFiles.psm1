@@ -93,11 +93,13 @@ function New-ConfigTransformsForConfigPath {
 				[string]$path			
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
-	$baseConfigFile = Confirm-BaseConfigFileExistsForConfigPath -path $path
+	$baseConfigFile = Get-BaseConfigFileForConfigPath -path $path
+	
+	Get-EnvironmentTransformForConfigPath -path (Split-Path $baseConfigFile -Parent)
 	
 }
 
-function Confirm-BaseConfigFileExistsForConfigPath {
+function Get-BaseConfigFileForConfigPath {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
@@ -118,6 +120,18 @@ function Confirm-BaseConfigFileExistsForConfigPath {
 	}	
 	
 	return $baseConfigFile
+}
+
+function Get-EnvironmentTransformForConfigPath {
+	Param(			
+			[Parameter(
+				Mandatory = $False )]
+				[string]$path			
+		)	
+		
+		Get-ChildItem $path | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+	
+	return 
 }
 
 Export-ModuleMember -Function New-SolutionConfigFiles
