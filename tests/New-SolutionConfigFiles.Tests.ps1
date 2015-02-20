@@ -112,7 +112,7 @@ Describe "New-SolutionConfigFiles application configuration" {
 		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"	
-		Mock -ModuleName $sut Confirm-ApplicationFolderExistsForConfigPath { } -Verifiable
+		Mock -ModuleName $sut Confirm-BaseConfigFileExistsForConfigPath { } -Verifiable
 		
 		try {
 			New-SolutionConfigFiles -path $testBasePath -verbose
@@ -124,21 +124,22 @@ Describe "New-SolutionConfigFiles application configuration" {
 			Remove-Module $sut
 		}
 		
-		It "Should call Confirm-ApplicationFolderExistsForConfigPath once" {
-            Assert-MockCalled Confirm-ApplicationFolderExistsForConfigPath -ModuleName $sut -Times 1
+		It "Should call Confirm-BaseConfigFileExistsForConfigPath once" {
+            Assert-MockCalled Confirm-BaseConfigFileExistsForConfigPath -ModuleName $sut -Times 1
         }
 
 	}	
 }
 
 Describe "New-SolutionConfigFiles application configuration" {
+	
+	New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
+	New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
+	$testBasePath = "$TestDrive"	
 
 	Context "When there is NO application folder" {
 	
 		Import-Module "$baseModulePath\$sut"
-		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
-		$testBasePath = "$TestDrive"	
 		
 		$result = $null
 		try {
@@ -157,6 +158,29 @@ Describe "New-SolutionConfigFiles application configuration" {
 		}
 
 	}	
+	
+	Context "When there is NO base config file" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
+		try {
+			$result = New-SolutionConfigFiles -path "$testBasePath\Project1" -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "No XML base config file found under path: $testBasePath\Project1\_config\application, please remove the '_config\application' folder or add a base XML config file." -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}
+
+	}		
 }
 
 $module = Get-Module $sut

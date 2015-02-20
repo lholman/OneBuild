@@ -87,13 +87,13 @@ function New-ConfigTransformsForConfigPath {
 				[string]$path			
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
-	Confirm-ApplicationFolderExistsForConfigPath -path $path
+	$baseConfigFile = Confirm-BaseConfigFileExistsForConfigPath -path $path
 	
 	
 	
 }
 
-function Confirm-ApplicationFolderExistsForConfigPath {
+function Confirm-BaseConfigFileExistsForConfigPath {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
@@ -104,7 +104,16 @@ function Confirm-ApplicationFolderExistsForConfigPath {
 	{
 		throw "No 'application' folder found under path: $path, please remove the _config folder or add a child 'application' folder."
 	}
-	return
+	
+	#Convention: Get the first XML file we find (ordered alphabetically) in the application folder. 
+	$baseConfigFile = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.xml'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+	
+	if ($baseConfigFile -eq $null)
+	{
+		throw "No XML base config file found under path: $path\application, please remove the '_config\application' folder or add a base XML config file."
+	}	
+	
+	return $baseConfigFile
 }
 
 Export-ModuleMember -Function New-SolutionConfigFiles
