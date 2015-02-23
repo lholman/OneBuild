@@ -93,12 +93,21 @@ function New-ConfigTransformsForConfigPath {
 				[string]$path			
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
-	$baseConfigFile = Get-BaseConfigFileForConfigPath -path $path
+	$baseConfigFilePath = Get-BaseConfigFileForConfigPath -path $path
 	
-	$childTransformFolders = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigFile -Parent)
+	$childTransformPaths = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigFilePath -Parent)
+
+	ForEach($childTransformPath in $childTransformPaths){
 	
-	
-	
+		$outputTransformPath = Set-OutputPathFromBaselineConfigAndTransformPaths
+		Invoke-ConfigTransformation -sourceFile $baseConfigFilePath -transformFile $childTransformPath -outputFile $outputTransformPath
+	}
+		
+}
+
+function Set-OutputPathFromBaselineConfigAndTransformPaths {
+
+	return "$PSScriptRoot\app.config"
 }
 
 function Get-BaseConfigFileForConfigPath {
@@ -114,15 +123,15 @@ function Get-BaseConfigFileForConfigPath {
 	}
 	
 	#Convention: Get the first .config file we find (ordered alphabetically) in the application folder. 
-	$baseConfigFile = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
-	
-	if ($baseConfigFile -eq $null)
+	$baseConfigFilePath = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+
+	if ($baseConfigFilePath -eq $null)
 	{
 		throw "No base config file found under path: $path\application, please remove the '_config\application' folder or add a base config file."
 	}	
 	
-	Write-Verbose "New-SolutionConfigFiles: Found base config file: $baseConfigFile"
-	return $baseConfigFile
+	Write-Verbose "New-SolutionConfigFiles: Found base config file: $baseConfigFilePath"
+	return $baseConfigFilePath
 }
 
 function Get-ChildTransformPathsForConfigPath {
@@ -132,7 +141,7 @@ function Get-ChildTransformPathsForConfigPath {
 				[string]$path			
 		)	
 
-	$childTransformFolders = Get-ChildItem $path | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+	$childTransformFolders = Get-ChildItem $path | Where {$_.Attributes -eq 'Directory'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
 
 	if (-not([bool]$childTransformFolders)) #Check IsNullOrEmpty
 	{
@@ -140,27 +149,48 @@ function Get-ChildTransformPathsForConfigPath {
 	}	
 	
 	$allChildFoldersHaveTransformFiles = $false
-	$childTransformPaths
+	$childTransformPaths = @()
 	ForEach ($childTransformFolder in $childTransformFolders)
 	{
 		$childTransformPath = Get-ChildItem $childTransformFolder | Where-Object {$_.Extension -eq '.xslt'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
-		
+
 		if (-not([bool]$childTransformPath)) #Check IsNullOrEmpty
 		{
 			throw "No child transform file found under 'child transform' folder: $childTransformFolder, please remove the 'child transform' folder or add a new 'child transform' file."
 		}
+		#Check for 'grandchild transform' folders.
+		$grandChildTransformFolder = Get-ChildItem $childTransformFolder -attributes D | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
 		
-		#Check for 'grandchild tranform' folders.
-		$grandChildTransformFolder = Get-ChildItem $childTransformFolder | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
-		Write-Host $grandChildTransformFolder
 		if ([bool]$grandChildTransformFolder) #Check IsNullOrEmpty
 		{
 			throw "A 'grandchild transform' folder: $grandChildTransformFolder was found under 'child transform' folder: $childTransformFolder, please remove any 'grandchild transform' folders."
-		}		
-			
+		}
 		$childTransformPaths += $childTransformPath
 	}
 	return $childTransformPaths
+}
+
+function Invoke-ConfigTransformation {
+	Param(			
+		[Parameter(Mandatory = $True )]
+			[string]$sourceFile,	
+		[Parameter(Mandatory = $True )]
+			[string]$transformFile,
+		[Parameter(Mandatory = $True )]
+			[string]$outputFile			
+	)
+	
+	Import-Module "$PSScriptRoot\New-TransformedConfigFile.psm1"
+	Try {
+		New-TransformedConfigFile -sourceFile $sourceFile -transformFile $transformFile -outputFile $outputFile
+	}
+	Catch {
+		throw $_
+	}
+	Finally {
+		Remove-Module New-TransformedConfigFile
+	}
+
 }
 
 Export-ModuleMember -Function New-SolutionConfigFiles
