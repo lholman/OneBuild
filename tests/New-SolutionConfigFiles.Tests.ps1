@@ -168,15 +168,39 @@ Describe "New-SolutionConfigFiles application configuration" {
 		}
 		
 		It "Exits the module with a descriptive terminating error" {
-			$expectedErrorMessage = "No XML base config file found under path: $testBasePath\Project1\_config\application, please remove the '_config\application' folder or add a base XML config file." -replace "\\","\\"			
+			$expectedErrorMessage = "No base config file found under path: $testBasePath\Project1\_config\application, please remove the '_config\application' folder or add a base config file." -replace "\\","\\"			
 			$result | Should Match $expectedErrorMessage
 		}
 	}	
-	
-	Context "When there is NO child XSLT transform file" {
+
+	Context "When there are NO child transform folders" {
 		
 		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
+		$testBasePath = "$TestDrive"			
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
+		try {
+			$result = New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "No 'child transform' folders found under 'application' folder: $testBasePath\Project1\_config\application, please add a new 'child transform' folder and transform file." -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}
+	}
+	
+	Context "When there is a child transform folder but NO child XSLT transform file" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
 		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
 		$testBasePath = "$TestDrive"			
 		Import-Module "$baseModulePath\$sut"
@@ -193,33 +217,41 @@ Describe "New-SolutionConfigFiles application configuration" {
 		}
 		
 		It "Exits the module with a descriptive terminating error" {
-			$expectedErrorMessage = "No child transform" -replace "\\","\\"			
+			$expectedErrorMessage = "No child transform file found under 'child transform' folder: $testBasePath\Project1\_config\application\Child1, please remove the 'child transform' folder or add a new 'child transform' file." -replace "\\","\\"			
 			$result | Should Match $expectedErrorMessage
 		}
-	}	
+	}
 
-	Context "When there is an application folder" {
-	
-		Import-Module "$baseModulePath\$sut"
-		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Project1\_config\application\source.xml" -Path $TestDrive -ItemType File	
-		$testBasePath = "$TestDrive"	
-		#Mock -ModuleName $sut Get-ChildTransformPathsForConfigPath { } -Verifiable
+
+	Context "When there is a child XSLT transform file and a grandchild transform folder" {
 		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory		
+		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType Directory		
+		$testBasePath = "$TestDrive"			
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
 		try {
-			New-SolutionConfigFiles -path $testBasePath -verbose
+			$result = New-SolutionConfigFiles -path $testBasePath -verbose
 		}
 		catch {
-			throw
+			$result = $_
 		}
 		finally {
 			Remove-Module $sut
 		}
 		
-		It "Should call Get-ChildTransformPathsForConfigPath once" {
-            #Assert-MockCalled Get-ChildTransformPathsForConfigPath -ModuleName $sut -Times 1
-        }
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "A 'grandchild transform' folder: $testBasePath\Project1\_config\application\Child1\Grandchild1 was found under 'child transform' folder: $testBasePath\Project1\_config\application\Child1, please remove any 'grandchild transform' folders." -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}
 	}	
+	
+
+
 	
 }
 

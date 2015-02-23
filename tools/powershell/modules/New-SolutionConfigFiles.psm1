@@ -95,7 +95,9 @@ function New-ConfigTransformsForConfigPath {
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
 	$baseConfigFile = Get-BaseConfigFileForConfigPath -path $path
 	
-	$childTransformPaths = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigFile -Parent)
+	$childTransformFolders = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigFile -Parent)
+	
+	
 	
 }
 
@@ -111,12 +113,12 @@ function Get-BaseConfigFileForConfigPath {
 		throw "No 'application' folder found under path: $path, please remove the _config folder or add a child 'application' folder."
 	}
 	
-	#Convention: Get the first XML file we find (ordered alphabetically) in the application folder. 
-	$baseConfigFile = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.xml'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+	#Convention: Get the first .config file we find (ordered alphabetically) in the application folder. 
+	$baseConfigFile = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
 	
 	if ($baseConfigFile -eq $null)
 	{
-		throw "No XML base config file found under path: $path\application, please remove the '_config\application' folder or add a base XML config file."
+		throw "No base config file found under path: $path\application, please remove the '_config\application' folder or add a base config file."
 	}	
 	
 	Write-Verbose "New-SolutionConfigFiles: Found base config file: $baseConfigFile"
@@ -130,15 +132,34 @@ function Get-ChildTransformPathsForConfigPath {
 				[string]$path			
 		)	
 
-	$childTransformPaths = Get-ChildItem $path | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
-		
-	if ([bool]$childTransformPaths) #Check IsNullOrEmpty
+	$childTransformFolders = Get-ChildItem $path | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+
+	if (-not([bool]$childTransformFolders)) #Check IsNullOrEmpty
 	{
-		#$applicationFolderName = $path.Split('\')
-		#$applicationFolderName = $applicationFolderName[$applicationFolderName.Count -1]
-		throw "No child transform folder(s) found under 'application' path: $path, please add a new child transform folder and transform file."
+		throw "No 'child transform' folders found under 'application' folder: $path, please add a new 'child transform' folder and transform file."
 	}	
 	
+	$allChildFoldersHaveTransformFiles = $false
+	$childTransformPaths
+	ForEach ($childTransformFolder in $childTransformFolders)
+	{
+		$childTransformPath = Get-ChildItem $childTransformFolder | Where-Object {$_.Extension -eq '.xslt'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
+		
+		if (-not([bool]$childTransformPath)) #Check IsNullOrEmpty
+		{
+			throw "No child transform file found under 'child transform' folder: $childTransformFolder, please remove the 'child transform' folder or add a new 'child transform' file."
+		}
+		
+		#Check for 'grandchild tranform' folders.
+		$grandChildTransformFolder = Get-ChildItem $childTransformFolder | ?{ $_.PSIsContainer } | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+		Write-Host $grandChildTransformFolder
+		if ([bool]$grandChildTransformFolder) #Check IsNullOrEmpty
+		{
+			throw "A 'grandchild transform' folder: $grandChildTransformFolder was found under 'child transform' folder: $childTransformFolder, please remove any 'grandchild transform' folders."
+		}		
+			
+		$childTransformPaths += $childTransformPath
+	}
 	return $childTransformPaths
 }
 
