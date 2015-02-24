@@ -93,27 +93,52 @@ function New-ConfigTransformsForConfigPath {
 				[string]$path			
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
-	$baseConfigFilePath = Get-BaseConfigFileForConfigPath -path $path
+	$baseConfigPath = Get-BaseConfigFileForConfigPath -path $path
 	
-	$childTransformPaths = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigFilePath -Parent)
+	$childTransformPaths = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigPath -Parent)
 
 	ForEach($childTransformPath in $childTransformPaths){
-	
-		$outputTransformPath = Set-OutputPathFromBaselineConfigAndTransformPaths
-		Invoke-ConfigTransformation -sourceFile $baseConfigFilePath -transformFile $childTransformPath -outputFile $outputTransformPath
+		
+		$outputTransformPath = Set-OutputPathFromBaselineConfigAndTransformPaths -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath
+
+		Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
 	}
 		
 }
 
 function Set-OutputPathFromBaselineConfigAndTransformPaths {
+	Param(			
+			[Parameter(Mandatory = $True )]
+				[string]$baseConfigPath,
+			[Parameter(Mandatory = $True )]
+				[string]$childTransformPath							
+		)	
+		
+		$transformedConfigFolder = "$basePath\_transformedConfig"
+		If (-not(Test-Path $transformedConfigFolder)) {
+			New-Item -Path $transformedConfigFolder -Force -ItemType Directory
+			Write-Verbose "New-SolutionConfigFiles: Created transform output folder: $basePath\_transformedConfig"
+		}
 
-	return "$PSScriptRoot\app.config"
+		$outputFileName = (Get-Item $baseConfigPath).Name
+		$outputFolder = (Get-Item $childTransformPath).DirectoryName
+		
+		$outputFileFolderParts = $outputFolder -Split "_config"
+		
+		$outputFolder = Join-Path -path $transformedConfigFolder -childpath (Split-Path $outputFileFolderParts[0] -leaf)
+		$outputFolder = Join-Path -path $outputFolder -childpath $outputFileFolderParts[1]
+		
+		If (-not(Test-Path $outputFolder)) {
+			New-Item -Path $outputFolder -Force -ItemType Directory
+			$outputFolder = (Resolve-Path $outputFolder)
+			Write-Verbose "New-SolutionConfigFiles: Created transform output folder: $outputFolder"
+		}
+		return Join-Path -path $outputFolder -childpath $outputFileName
 }
 
 function Get-BaseConfigFileForConfigPath {
 	Param(			
-			[Parameter(
-				Mandatory = $False )]
+			[Parameter(Mandatory = $False )]
 				[string]$path			
 		)	
 	
@@ -123,15 +148,15 @@ function Get-BaseConfigFileForConfigPath {
 	}
 	
 	#Convention: Get the first .config file we find (ordered alphabetically) in the application folder. 
-	$baseConfigFilePath = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
+	$baseConfigPath = Get-ChildItem "$path\application" | Where-Object {$_.Extension -eq '.config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
 
-	if ($baseConfigFilePath -eq $null)
+	if ($baseConfigPath -eq $null)
 	{
 		throw "No base config file found under path: $path\application, please remove the '_config\application' folder or add a base config file."
 	}	
 	
-	Write-Verbose "New-SolutionConfigFiles: Found base config file: $baseConfigFilePath"
-	return $baseConfigFilePath
+	Write-Verbose "New-SolutionConfigFiles: Found base config file: $baseConfigPath"
+	return $baseConfigPath
 }
 
 function Get-ChildTransformPathsForConfigPath {
