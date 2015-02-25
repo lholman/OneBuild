@@ -34,20 +34,20 @@ function New-SolutionConfigFiles{
 				Try {
 						$basePath = Confirm-Path -path $path
 
-				 		$configPaths = Get-ChildConfigFolders -path $basePath
+				 		$projectConfigFolders = Get-ProjectConfigFolders -path $basePath
 
-						if ($configPaths -eq $null)
+						if ($projectConfigFolders -eq $null)
 						{
 							Write-Warning "No configuration '_config' folders found, exiting without configuration  transformation."
 							return
 						}						
 						
-						$numberOfConfigPaths = $configPaths.Count 
+						$numberOfConfigPaths = $projectConfigFolders.Count 
 						Write-Verbose "New-SolutionConfigFiles: Found $numberOfConfigPaths _config path(s)."
 						
-						ForEach ($configPath in $configPaths)
+						ForEach ($projectConfigFolder in $projectConfigFolders)
 						{
-							New-ConfigTransformsForConfigPath -path $configPath							
+							New-TransformedConfigForProjectConfigFolder -path $projectConfigFolder							
 						}
 					
 				} catch [Exception] {
@@ -76,7 +76,7 @@ function Confirm-Path {
 	}
 }
 
-function Get-ChildConfigFolders {
+function Get-ProjectConfigFolders {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
@@ -86,27 +86,27 @@ function Get-ChildConfigFolders {
 	return Get-ChildItem $path -recurse | Where-Object {$_.Name -eq '_config'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName}
 }
 
-function New-ConfigTransformsForConfigPath {
+function New-TransformedConfigForProjectConfigFolder {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
 				[string]$path			
 		)	
 	Write-Verbose "New-SolutionConfigFiles: Processing config transformations for $path."	
-	$baseConfigPath = Get-BaseConfigFileForConfigPath -path $path
+	$baseConfigPath = Get-BaseConfigFileForProjectConfigFolder -path $path
 	
-	$childTransformPaths = Get-ChildTransformPathsForConfigPath -path (Split-Path $baseConfigPath -Parent)
+	$childTransformPaths = Get-ChildTransformPathsForProjectConfigFolder -path (Split-Path $baseConfigPath -Parent)
 
 	ForEach($childTransformPath in $childTransformPaths){
 		
-		$outputTransformPath = Set-OutputPathFromBaselineConfigAndTransformPaths -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath
+		$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath
 
 		Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
 	}
 		
 }
 
-function Set-OutputPathFromBaselineConfigAndTransformPaths {
+function Set-TransformOutputPath {
 	Param(			
 			[Parameter(Mandatory = $True )]
 				[string]$baseConfigPath,
@@ -136,7 +136,7 @@ function Set-OutputPathFromBaselineConfigAndTransformPaths {
 		return Join-Path -path $outputFolder -childpath $outputFileName
 }
 
-function Get-BaseConfigFileForConfigPath {
+function Get-BaseConfigFileForProjectConfigFolder {
 	Param(			
 			[Parameter(Mandatory = $False )]
 				[string]$path			
@@ -159,7 +159,7 @@ function Get-BaseConfigFileForConfigPath {
 	return $baseConfigPath
 }
 
-function Get-ChildTransformPathsForConfigPath {
+function Get-ChildTransformPathsForProjectConfigFolder {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
@@ -174,6 +174,8 @@ function Get-ChildTransformPathsForConfigPath {
 	}	
 	
 	$allChildFoldersHaveTransformFiles = $false
+	$grandChildTransformFolderCount = 0
+	$childTransformFolderCount = $childTransformFolders.Count
 	$childTransformPaths = @()
 	ForEach ($childTransformFolder in $childTransformFolders)
 	{
@@ -183,16 +185,47 @@ function Get-ChildTransformPathsForConfigPath {
 		{
 			throw "No child transform file found under 'child transform' folder: $childTransformFolder, please remove the 'child transform' folder or add a new 'child transform' file."
 		}
-		#Check for 'grandchild transform' folders.
-		$grandChildTransformFolder = Get-ChildItem $childTransformFolder -attributes D | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1
-		
-		if ([bool]$grandChildTransformFolder) #Check IsNullOrEmpty
-		{
-			throw "A 'grandchild transform' folder: $grandChildTransformFolder was found under 'child transform' folder: $childTransformFolder, please remove any 'grandchild transform' folders."
-		}
 		$childTransformPaths += $childTransformPath
 	}
+	Check-GrandchildTransformFolders -childTransformFolders $childTransformFolders
+	
 	return $childTransformPaths
+}
+
+function Check-GrandchildTransformFolders {
+	Param(			
+			[Parameter(
+				Mandatory = $False )]
+				[array]$childTransformFolders			
+		)	
+		
+		$grandChildTransformFolderCount = 0
+		$childTransformFolderCount = $childTransformFolders.Count
+		ForEach ($childTransformFolder in $childTransformFolders)
+		{
+			#Check for 'grandchild transform' folders.
+			$grandChildTransformFolder = Get-ChildItem $childTransformFolder -attributes D | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+
+			if ([bool]$grandChildTransformFolder) #Check IsNullOrEmpty
+			{	
+				$grandChildTransformFolderCount += $grandChildTransformFolder.Count
+			}
+		}
+
+		if (($grandChildTransformFolderCount -gt 0) -and ($grandChildTransformFolderCount -lt $childTransformFolderCount)) {
+			
+			$childTransformFoldersWithoutGrandchildFoldersCount = $childTransformFolderCount - $grandChildTransformFolderCount
+			
+			throw "The 'project config' folder: $path contains $grandChildTransformFolderCount 'child transform' folders with 'grandchild transform' folders and $childTransformFoldersWithoutGrandchildFoldersCount without 'grandchild transform' folders. Either add or remove 'grandchild transform' folders with corresponding 'grandchild transform' files to make the 'project config' folder structure consistent."
+
+		}
+
+		#if ($grandChildTransformFolderCount -eq $childTransformFolderCount)
+		#{
+		#	throw "A 'grandchild transform' folder: $grandChildTransformFolder was found under 'child transform' folder: $childTransformFolder, please remove any 'grandchild transform' folders without corresponding 'grandchild transform' files."		
+
+		#}
+
 }
 
 function Invoke-ConfigTransformation {

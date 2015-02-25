@@ -16,8 +16,8 @@ Describe "New-SolutionConfigFiles configuration" {
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"	
-		Mock -ModuleName $sut Get-ChildConfigFolders { return "$testBasePath\Project1\_config"}
-		Mock -ModuleName $sut New-ConfigTransformsForConfigPath { }
+		Mock -ModuleName $sut Get-ProjectConfigFolders { return "$testBasePath\Project1\_config"}
+		Mock -ModuleName $sut New-TransformedConfigForProjectConfigFolder { }
 
 		try {
 			New-SolutionConfigFiles -path $testBasePath -verbose
@@ -29,12 +29,12 @@ Describe "New-SolutionConfigFiles configuration" {
 			Remove-Module $sut
 		}
 		
-		It "Should call Get-ChildConfigFolders to identify all _config folders under path" {
-            Assert-MockCalled Get-ChildConfigFolders -ModuleName $sut -Times 1
+		It "Should call Get-ProjectConfigFolders to identify all _config folders under path" {
+            Assert-MockCalled Get-ProjectConfigFolders -ModuleName $sut -Times 1
         }
 		
-		It "Should call New-ConfigTransformsForConfigPath once" {
-            Assert-MockCalled New-ConfigTransformsForConfigPath -ModuleName $sut -Times 1
+		It "Should call New-TransformedConfigForProjectConfigFolder once" {
+            Assert-MockCalled New-TransformedConfigForProjectConfigFolder -ModuleName $sut -Times 1
         }
 
 	}
@@ -43,7 +43,7 @@ Describe "New-SolutionConfigFiles configuration" {
 	
 		Import-Module "$baseModulePath\$sut"
 
-		Mock -ModuleName $sut Get-ChildConfigFolders { return $null}
+		Mock -ModuleName $sut Get-ProjectConfigFolders { return $null}
 		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
             $Message -eq "No configuration '_config' folders found, exiting without configuration  transformation."
         }
@@ -72,7 +72,7 @@ Describe "New-SolutionConfigFiles one project _config folder" {
 		New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"
-		Mock -ModuleName $sut New-ConfigTransformsForConfigPath { }
+		Mock -ModuleName $sut New-TransformedConfigForProjectConfigFolder { }
 		
 		try {
 			New-SolutionConfigFiles -path $testBasePath -verbose
@@ -85,11 +85,11 @@ Describe "New-SolutionConfigFiles one project _config folder" {
 		}
 		
 		It "Should identify one _config folder" {
-            #Assert-MockCalled Get-ChildConfigFolders -ModuleName $sut -Times 1
+            #Assert-MockCalled Get-ProjectConfigFolders -ModuleName $sut -Times 1
         }
 		
-		It "Should call New-ConfigTransformsForConfigPath once" {
-            Assert-MockCalled New-ConfigTransformsForConfigPath -ModuleName $sut -Times 1
+		It "Should call New-TransformedConfigForProjectConfigFolder once" {
+            Assert-MockCalled New-TransformedConfigForProjectConfigFolder -ModuleName $sut -Times 1
         }
 	}
 }
@@ -104,7 +104,7 @@ Describe "New-SolutionConfigFiles multiple project _config folders" {
 		New-Item -Name "Project2" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project2\_config" -Path $TestDrive -ItemType Directory		
 		$testBasePath = "$TestDrive"	
-		Mock -ModuleName $sut New-ConfigTransformsForConfigPath { }
+		Mock -ModuleName $sut New-TransformedConfigForProjectConfigFolder { }
 
 		try {
 			New-SolutionConfigFiles -path $testBasePath -verbose
@@ -116,14 +116,14 @@ Describe "New-SolutionConfigFiles multiple project _config folders" {
 			Remove-Module $sut
 		}
 		
-		It "Should call New-ConfigTransformsForConfigPath twice" {
-            Assert-MockCalled New-ConfigTransformsForConfigPath -ModuleName $sut -Times 2
+		It "Should call New-TransformedConfigForProjectConfigFolder twice" {
+            Assert-MockCalled New-TransformedConfigForProjectConfigFolder -ModuleName $sut -Times 2
         }
 
 	}	
 }
 
-Describe "New-SolutionConfigFiles convention not followed" {
+Describe "New-SolutionConfigFiles Environment config structure convention not followed" {
 	
 	New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
 	New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
@@ -222,13 +222,17 @@ Describe "New-SolutionConfigFiles convention not followed" {
 		}
 	}
 
-	Context "When there is a child XSLT transform file and a grandchild transform folder" {
+}
+
+Describe "New-SolutionConfigFiles Client and environment config structure convention not followed" {
+
+	Context "When there is a child XSLT transform file a 'grandchild transform' folder and no 'grandchild transform' file" {
 		
 		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
 		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
 		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory		
-		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType Directory		
+		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory				
 		$testBasePath = "$TestDrive"			
 		Import-Module "$baseModulePath\$sut"
 		
@@ -244,12 +248,51 @@ Describe "New-SolutionConfigFiles convention not followed" {
 		}
 		
 		It "Exits the module with a descriptive terminating error" {
-			$expectedErrorMessage = "A 'grandchild transform' folder: $testBasePath\Project1\_config\application\Child1\Grandchild1 was found under 'child transform' folder: $testBasePath\Project1\_config\application\Child1, please remove any 'grandchild transform' folders." -replace "\\","\\"			
+			$expectedErrorMessage = "A 'grandchild transform' folder: $testBasePath\Project1\_config\application\Child1\Grandchild1 was found under 'child transform' folder: $testBasePath\Project1\_config\application\Child1, please remove any 'grandchild transform' folders without corresponding 'grandchild transform' files." -replace "\\","\\"			
 			$result | Should Match $expectedErrorMessage
 		}
-	}	
+	}
+
+	Context "When there are only some grandchild transform folders" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child2" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child2\app.xslt" -Path $TestDrive -ItemType File	
+		#New-Item -Name "Project1\_config\application\Child2\Grandchild2" -Path $TestDrive -ItemType Directory #Purposefully removed for test
+		#New-Item -Name "Project1\_config\application\Child2\Grandchild2\app.xslt" -Path $TestDrive -ItemType File #Purposefully removed for test
+		New-Item -Name "Project1\_config\application\Child3" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child3\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child3\Grandchild3" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child3\Grandchild3\app.xslt" -Path $TestDrive -ItemType File		
+	
+
+		$testBasePath = "$TestDrive"			
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
+		try {
+			$result = New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "The 'project config' folder: $testBasePath\Project1\_config\application contains 2 'child transform' folders with 'grandchild transform' folders and 1 without 'grandchild transform' folders. Either add or remove 'grandchild transform' folders with corresponding 'grandchild transform' files to make the 'project config' folder structure consistent." -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}
+	}
 
 }
+
 
 Describe "New-SolutionConfigFiles single transformation" {
 	
@@ -321,7 +364,6 @@ Describe "New-SolutionConfigFiles multiple transformations" {
             Assert-MockCalled Invoke-ConfigTransformation -ModuleName $sut -Times 3
         }
 	}
-	
 }
 
 Describe "New-SolutionConfigFiles transformed output" {
@@ -347,7 +389,7 @@ Describe "New-SolutionConfigFiles transformed output" {
 		
 		$expectedOutputFile = "<?xml version=""1.0""?><configuration><custom><groups><group name=""TestGroup1""><values><value key=""Test1"" value=""True"" /><value key=""Test2"" value=""601"" /></values></group><group name=""TestGroup2""><values><value key=""Test3"" value=""True"" /></values></group></groups></custom></configuration>"
 		
-		#Mock -ModuleName $sut Set-OutputPathFromBaselineConfigAndTransformPaths { return "$TestDrive\_transformedConfig\application\Child1\app.config" }
+		#Mock -ModuleName $sut Set-TransformOutputPath { return "$TestDrive\_transformedConfig\application\Child1\app.config" }
 		
 		try {
 			New-SolutionConfigFiles -path $testBasePath -verbose
