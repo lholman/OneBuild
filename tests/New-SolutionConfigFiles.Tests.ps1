@@ -123,7 +123,7 @@ Describe "New-SolutionConfigFiles multiple project _config folders" {
 	}	
 }
 
-Describe "New-SolutionConfigFiles Environment config structure convention not followed" {
+Describe "New-SolutionConfigFiles Child config structure convention not followed" {
 	
 	New-Item -Name "Project1" -Path $TestDrive -ItemType Directory
 	New-Item -Name "Project1\_config" -Path $TestDrive -ItemType Directory	
@@ -224,7 +224,7 @@ Describe "New-SolutionConfigFiles Environment config structure convention not fo
 
 }
 
-Describe "New-SolutionConfigFiles Client and environment config structure convention not followed" {
+Describe "New-SolutionConfigFiles Child and grandchild config structure convention not followed" {
 
 	Context "When there is a child XSLT transform file a 'grandchild transform' folder and no 'grandchild transform' file" {
 		
@@ -248,7 +248,9 @@ Describe "New-SolutionConfigFiles Client and environment config structure conven
 		}
 		
 		It "Exits the module with a descriptive terminating error" {
-			$expectedErrorMessage = "A 'grandchild transform' folder: $testBasePath\Project1\_config\application\Child1\Grandchild1 was found under 'child transform' folder: $testBasePath\Project1\_config\application\Child1, please remove any 'grandchild transform' folders without corresponding 'grandchild transform' files." -replace "\\","\\"			
+			$expectedErrorMessage = "No 'grandchild transform' file found under 'grandchild transform' folder: $testBasePath\Project1\_config\application\Child1\Grandchild1. All 'grandchild transform' folders must contain a 'grandchild transform' file. Please remove all 'grandchild transform' folders or add a new 'grandchild transform' file to the 'grandchild transform' folder: $testBasePath\Project1\_config\application\Child1\Grandchild1." -replace "\\","\\"	
+
+				
 			$result | Should Match $expectedErrorMessage
 		}
 	}
@@ -292,7 +294,6 @@ Describe "New-SolutionConfigFiles Client and environment config structure conven
 	}
 
 }
-
 
 Describe "New-SolutionConfigFiles single transformation" {
 	

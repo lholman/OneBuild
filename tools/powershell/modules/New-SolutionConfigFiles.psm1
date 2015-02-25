@@ -33,7 +33,8 @@ function New-SolutionConfigFiles{
 	Process {
 				Try {
 						$basePath = Confirm-Path -path $path
-
+						$processGrandchildFolders = $false
+						
 				 		$projectConfigFolders = Get-ProjectConfigFolders -path $basePath
 
 						if ($projectConfigFolders -eq $null)
@@ -97,13 +98,36 @@ function New-TransformedConfigForProjectConfigFolder {
 	
 	$childTransformPaths = Get-ChildTransformPathsForProjectConfigFolder -path (Split-Path $baseConfigPath -Parent)
 
-	ForEach($childTransformPath in $childTransformPaths){
-		
-		$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath
-
-		Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
+	if (-not($processGrandchildFolders))
+	{
+		return New-TransformChildTransformFoldersOnly -childTransformPaths $childTransformPaths
 	}
+	
+	return New-TransformChildAndGrandchildTransformFolders -childTransformPaths $childTransformPaths
+}
+
+function New-TransformChildTransformFoldersOnly {
+	Param(			
+			[Parameter(Mandatory = $False )]
+				[array]$childTransformPaths			
+		)	
 		
+		ForEach($childTransformPath in $childTransformPaths){
+			
+			$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath
+
+			Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
+		}
+		return		
+}
+
+function New-TransformChildAndGrandchildTransformFolders {
+	Param(			
+			[Parameter(Mandatory = $False )]
+				[array]$childTransformPaths			
+		)	
+		
+		return
 }
 
 function Set-TransformOutputPath {
@@ -187,45 +211,56 @@ function Get-ChildTransformPathsForProjectConfigFolder {
 		}
 		$childTransformPaths += $childTransformPath
 	}
-	Check-GrandchildTransformFolders -childTransformFolders $childTransformFolders
+	$processGrandchildFolders = Confirm-GrandchildTransformFoldersExist -childTransformFolders $childTransformFolders
 	
 	return $childTransformPaths
 }
 
-function Check-GrandchildTransformFolders {
+function Confirm-GrandchildTransformFoldersExist {
 	Param(			
 			[Parameter(
 				Mandatory = $False )]
 				[array]$childTransformFolders			
 		)	
 		
-		$grandChildTransformFolderCount = 0
+		$grandChildTransformFoldersCount = 0
 		$childTransformFolderCount = $childTransformFolders.Count
 		ForEach ($childTransformFolder in $childTransformFolders)
 		{
 			#Check for 'grandchild transform' folders.
-			$grandChildTransformFolder = Get-ChildItem $childTransformFolder -attributes D | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+			$grandChildTransformFolders = Get-ChildItem $childTransformFolder -attributes D | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
 
-			if ([bool]$grandChildTransformFolder) #Check IsNullOrEmpty
+			if ([bool]$grandChildTransformFolders) #Check IsNullOrEmpty
 			{	
-				$grandChildTransformFolderCount += $grandChildTransformFolder.Count
+				$grandChildTransformFoldersCount += $grandChildTransformFolders.Count
+			}
+			
+			ForEach ($grandChildTransformFolder in $grandChildTransformFolders) {
+			
+				$grandChildTransformPath = Get-ChildItem $grandChildTransformFolder | Where-Object {$_.Extension -eq '.xslt'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
+
+				if (-not([bool]$grandChildTransformPath)) #Check IsNullOrEmpty
+				{
+					
+					throw "No 'grandchild transform' file found under 'grandchild transform' folder: $grandChildTransformFolder. All 'grandchild transform' folders must contain a 'grandchild transform' file. Please remove all 'grandchild transform' folders or add a new 'grandchild transform' file to the 'grandchild transform' folder: $grandChildTransformFolder."
+				}
 			}
 		}
 
-		if (($grandChildTransformFolderCount -gt 0) -and ($grandChildTransformFolderCount -lt $childTransformFolderCount)) {
+		if ($grandChildTransformFoldersCount -eq 0) {
+			Write-Verbose "New-SolutionConfigFiles: No 'grandchild transform' folders found, continuing with 'child transform' only."
+			return $false
+		}
+		
+		if (($grandChildTransformFoldersCount -gt 0) -and ($grandChildTransformFoldersCount -lt $childTransformFolderCount)) {
 			
-			$childTransformFoldersWithoutGrandchildFoldersCount = $childTransformFolderCount - $grandChildTransformFolderCount
+			$childTransformFoldersWithoutGrandchildFoldersCount = $childTransformFolderCount - $grandChildTransformFoldersCount
 			
-			throw "The 'project config' folder: $path contains $grandChildTransformFolderCount 'child transform' folders with 'grandchild transform' folders and $childTransformFoldersWithoutGrandchildFoldersCount without 'grandchild transform' folders. Either add or remove 'grandchild transform' folders with corresponding 'grandchild transform' files to make the 'project config' folder structure consistent."
+			throw "The 'project config' folder: $path contains $grandChildTransformFoldersCount 'child transform' folders with 'grandchild transform' folders and $childTransformFoldersWithoutGrandchildFoldersCount without 'grandchild transform' folders. Either add or remove 'grandchild transform' folders with corresponding 'grandchild transform' files to make the 'project config' folder structure consistent."
 
 		}
-
-		#if ($grandChildTransformFolderCount -eq $childTransformFolderCount)
-		#{
-		#	throw "A 'grandchild transform' folder: $grandChildTransformFolder was found under 'child transform' folder: $childTransformFolder, please remove any 'grandchild transform' folders without corresponding 'grandchild transform' files."		
-
-		#}
-
+		
+	return $true
 }
 
 function Invoke-ConfigTransformation {
