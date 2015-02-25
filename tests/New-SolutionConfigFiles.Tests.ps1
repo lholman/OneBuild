@@ -31,7 +31,7 @@ Describe "New-SolutionConfigFiles configuration" {
 			Remove-Module $sut
 		}
 		
-		It "Should recursively remove the _transformedConfig folder" {
+		It "Should remove the _transformedConfig folder and contents" {
             Test-Path "$testBasePath\_transformedConfig" | Should Be $false
         }
 		
@@ -330,10 +330,6 @@ Describe "New-SolutionConfigFiles single child transformation" {
 		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
 		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
-		#New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"	
 		Import-Module "$baseModulePath\$sut"
 		
@@ -368,12 +364,6 @@ Describe "New-SolutionConfigFiles multiple child transformations" {
 		New-Item -Name "Project1\_config\application\Child3" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config\application\Child3\app.xslt" -Path $TestDrive -ItemType File
 
-		#New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType 	Directory	
-		#New-Item -Name "_transformedConfig\Project1\application\Child2" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "_transformedConfig\Project1\application\Child3" -Path $TestDrive -ItemType Directory 		
 		$testBasePath = "$TestDrive"	
 		Import-Module "$baseModulePath\$sut"
 		Mock -ModuleName $sut Invoke-ConfigTransformation {}
@@ -422,7 +412,6 @@ Describe "New-SolutionConfigFiles single grandchild transformation" {
 		}
 		
 		It "Should set the child transform output path to a temporary path" {
-            #Assert-MockCalled Invoke-ConfigTransformation -ModuleName $sut -Times 1
 			Assert-VerifiableMocks
         }
 	}
@@ -436,11 +425,6 @@ Describe "New-SolutionConfigFiles single grandchild transformation" {
 		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config\application\Child1\Grandchild1\app.xslt" -Path $TestDrive -ItemType File		
 
-		New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\temp" -Path $TestDrive -ItemType Directory		
-		New-Item -Name "_transformedConfig\temp\Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\temp\Project1\application" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\temp\Project1\application\Child1" -Path $TestDrive -ItemType Directory			
 		$testBasePath = "$TestDrive"	
 		Import-Module "$baseModulePath\$sut"
 		
@@ -468,6 +452,44 @@ Describe "New-SolutionConfigFiles single grandchild transformation" {
 			$actualOutputFile = $actualOutputFile -replace "`t|`n|`r",""
 			$actualOutputFile | Should BeExactly $expectedOutputFile
         }
+	}	
+
+	Context "When a temporary transformed child output file is transformed using a grandchild transform file" {
+	
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1\app.xslt" -Path $TestDrive -ItemType File		
+
+		$testBasePath = "$TestDrive"	
+		Import-Module "$baseModulePath\$sut"
+		
+		Set-Content "$testBasePath\Project1\_config\application\app.config" "<?xml version=""1.0""?><configuration><custom><groups><group name=""TestGroup1""><values><value key=""Test1"" value=""True"" /><value key=""Test2"" value=""600"" /></values></group><group name=""TestGroup2""><values><value key=""Test3"" value=""True"" /></values></group></groups></custom></configuration>"
+		
+		Set-Content "$testBasePath\Project1\_config\application\Child1\app.xslt" "<?xml version=""1.0""?><configuration xmlns:xdt=""http://schemas.microsoft.com/XML-Document-Transform""><custom><groups><group name=""TestGroup1""><values><value key=""Test2"" value=""601"" xdt:Transform=""Replace"" xdt:Locator=""Match(key)"" /></values></group></groups></custom></configuration>"
+		
+		Set-Content "$testBasePath\Project1\_config\application\Child1\Grandchild1\app.xslt" "<?xml version=""1.0""?><configuration xmlns:xdt=""http://schemas.microsoft.com/XML-Document-Transform""><custom><groups><group name=""TestGroup1""><values><value key=""Test2"" value=""602"" xdt:Transform=""Replace"" xdt:Locator=""Match(key)"" /></values></group></groups></custom></configuration>"
+		
+		$expectedOutputFile = "<?xml version=""1.0""?><configuration><custom><groups><group name=""TestGroup1""><values><value key=""Test1"" value=""True"" /><value key=""Test2"" value=""602"" /></values></group><group name=""TestGroup2""><values><value key=""Test3"" value=""True"" /></values></group></groups></custom></configuration>"
+		
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			$_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should generate a valid transformed output file in the transformed output folder" {
+			#Flatten the transformed XML file, removing white space and carriage returns
+			$actualOutputFile = Get-Content "$testBasePath\_transformedConfig\Project1\application\Child1\Grandchild1\app.config" | Foreach {$_.Trim()} | Out-String
+			$actualOutputFile = $actualOutputFile -replace "`t|`n|`r",""
+			$actualOutputFile | Should BeExactly $expectedOutputFile
+		}
 	}	
 }
 

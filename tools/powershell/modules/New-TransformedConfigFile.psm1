@@ -87,13 +87,8 @@ function New-TransformedConfigFile{
 						}
 						
 
-						$result = $null
-						$result = Invoke-ConfigTransformationTool -sourceFile $sourceFile -transformFile $transformFile -outputFile $outputFile -cttPath $cttPath
+						Invoke-ConfigTransformationTool -sourceFile $sourceFile -transformFile $transformFile -outputFile $outputFile -cttPath $cttPath
 						
-						if ($result -ne $null) 
-						{
-							throw "Whilst executing ctt.exe for sourceFile: $sourceFile and transformFile: $transformFile, ctt.exe exited with error message: $result"
-						}
 				} 
 				catch [Exception] {
 					throw "An error occurred transforming sourceFile: $sourceFile. `r`n $_"
@@ -144,10 +139,10 @@ function Invoke-ConfigTransformationTool {
 	#Write-Verbose "New-TransformedConfigFile: & $cttPath source:""$sourceFile"" transform:""$transformFile"" destination:""$outputFile""" 
 	$output = & $cttPath source:"$sourceFile" transform:"$transformFile" destination:"$outputFile" indent verbose 2>&1 
 	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
-	
+
 	if ($err)
 	{
-		return $err
+		throw "Whilst executing ctt.exe for sourceFile: $sourceFile and transformFile: $transformFile, ctt.exe exited with error message: $err"
 	}
 
 	#As we've re-directed error output to standard output (stdout) using '2>&1', so that we can save it to a variable, we have effectively suppressed stdout, therefore we write $output to the Verbose stream here. 

@@ -134,11 +134,24 @@ function New-TransformChildAndGrandchildTransformFolders {
 		
 		ForEach($childTransformPath in $childTransformPaths){
 			
-			$outputTransformPath = $null
-			$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath -useTempOutputPath $true
+			$tempOutputTransformPath = $null
+			$tempOutputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath -useTempOutputPath $true
 
-			Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
-		}		
+			Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $tempOutputTransformPath
+			
+			#Transform for each 'grandchild transform' file
+			$childTransformFolder = (Get-Item $childTransformPath).DirectoryName
+			$grandChildTransformFolders = Get-ChildItem $childTransformFolder | Where {$_.PSIsContainer -eq $true} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+
+			ForEach ($grandChildTransformFolder in $grandChildTransformFolders) {
+			
+				$grandChildTransformPath = Get-ChildItem $grandChildTransformFolder | Where-Object {$_.Extension -eq '.xslt'} |Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
+
+				$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $grandChildTransformPath
+				
+				Invoke-ConfigTransformation -sourceFile $tempOutputTransformPath -transformFile $grandChildTransformPath -outputFile $outputTransformPath
+			}
+		}	
 		return
 }
 
@@ -155,7 +168,7 @@ function Set-TransformOutputPath {
 		$transformedConfigFolder = "$basePath\_transformedConfig"
 		if ($useTempOutputPath) {
 			$transformedConfigFolder = Join-Path -path $transformedConfigFolder -childpath "temp"
-			Write-Verbose "New-SolutionConfigFiles: Using temporary transformed output folder: $transformedOutputPath"	
+			Write-Verbose "New-SolutionConfigFiles: Using temporary transformed output folder: $transformedConfigFolder"	
 		}
 				
 		If (-not(Test-Path $transformedConfigFolder)) {
