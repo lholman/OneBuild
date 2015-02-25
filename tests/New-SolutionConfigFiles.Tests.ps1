@@ -10,6 +10,33 @@ if ($module -ne $null)
 
 Describe "New-SolutionConfigFiles configuration" {
 
+	Context "When there is an existing _transformedConfig folder" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType 	Directory	
+		New-Item -Name "_transformedConfig\Project1\application\Child2" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\Project1\application\Child2\app.config" -Path $TestDrive -ItemType File 			
+		$testBasePath = "$TestDrive"	
+
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should recursively remove the _transformedConfig folder" {
+            Test-Path "$testBasePath\_transformedConfig" | Should Be $false
+        }
+		
+	}
+
 	Context "When there is configuration to transform" {
 	
 		Import-Module "$baseModulePath\$sut"
@@ -295,7 +322,7 @@ Describe "New-SolutionConfigFiles Child and grandchild config structure conventi
 
 }
 
-Describe "New-SolutionConfigFiles single transformation" {
+Describe "New-SolutionConfigFiles single child transformation" {
 	
 	Context "When there is a base config file, child transform folder and child transform file" {
 		
@@ -303,10 +330,10 @@ Describe "New-SolutionConfigFiles single transformation" {
 		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
 		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
-		New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType Directory	
+		#New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType Directory	
 		$testBasePath = "$TestDrive"	
 		Import-Module "$baseModulePath\$sut"
 		
@@ -328,7 +355,7 @@ Describe "New-SolutionConfigFiles single transformation" {
 	}
 }
 
-Describe "New-SolutionConfigFiles multiple transformations" {
+Describe "New-SolutionConfigFiles multiple child transformations" {
 
 		Context "When there is a base config file and multiple child transform folders and files" {
 		
@@ -341,12 +368,12 @@ Describe "New-SolutionConfigFiles multiple transformations" {
 		New-Item -Name "Project1\_config\application\Child3" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Project1\_config\application\Child3\app.xslt" -Path $TestDrive -ItemType File
 
-		New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType 	Directory	
-		New-Item -Name "_transformedConfig\Project1\application\Child2" -Path $TestDrive -ItemType Directory
-		New-Item -Name "_transformedConfig\Project1\application\Child3" -Path $TestDrive -ItemType Directory 		
+		#New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1\application" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1\application\Child1" -Path $TestDrive -ItemType 	Directory	
+		#New-Item -Name "_transformedConfig\Project1\application\Child2" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "_transformedConfig\Project1\application\Child3" -Path $TestDrive -ItemType Directory 		
 		$testBasePath = "$TestDrive"	
 		Import-Module "$baseModulePath\$sut"
 		Mock -ModuleName $sut Invoke-ConfigTransformation {}
@@ -367,7 +394,84 @@ Describe "New-SolutionConfigFiles multiple transformations" {
 	}
 }
 
-Describe "New-SolutionConfigFiles transformed output" {
+Describe "New-SolutionConfigFiles single grandchild transformation" {
+	
+	Context "When there is a grandchild transform file" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1\app.xslt" -Path $TestDrive -ItemType File		
+
+		$testBasePath = "$TestDrive"	
+		Import-Module "$baseModulePath\$sut"
+		
+		Mock -ModuleName $sut Set-TransformOutputPath { return "$testBasePath\_transformedConfig\temp\Project1\application\Child1" } -Verifiable -ParameterFilter {$useTempOutputPath -eq $true}
+		Mock -ModuleName $sut Invoke-ConfigTransformation { }
+		
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			$_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should set the child transform output path to a temporary path" {
+            #Assert-MockCalled Invoke-ConfigTransformation -ModuleName $sut -Times 1
+			Assert-VerifiableMocks
+        }
+	}
+	
+	Context "When a base config file is transformed using a child transform file" {
+		
+		New-Item -Name "Project1\_config\application" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Project1\_config\application\app.config" -Path $TestDrive -ItemType File	
+		New-Item -Name "Project1\_config\application\Child1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\app.xslt" -Path $TestDrive -ItemType File		
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Project1\_config\application\Child1\Grandchild1\app.xslt" -Path $TestDrive -ItemType File		
+
+		New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp" -Path $TestDrive -ItemType Directory		
+		New-Item -Name "_transformedConfig\temp\Project1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp\Project1\application" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp\Project1\application\Child1" -Path $TestDrive -ItemType Directory			
+		$testBasePath = "$TestDrive"	
+		Import-Module "$baseModulePath\$sut"
+		
+		Set-Content "$testBasePath\Project1\_config\application\app.config" "<?xml version=""1.0""?><configuration><custom><groups><group name=""TestGroup1""><values><value key=""Test1"" value=""True"" /><value key=""Test2"" value=""600"" /></values></group><group name=""TestGroup2""><values><value key=""Test3"" value=""True"" /></values></group></groups></custom></configuration>"
+		
+		Set-Content "$testBasePath\Project1\_config\application\Child1\app.xslt" "<?xml version=""1.0""?><configuration xmlns:xdt=""http://schemas.microsoft.com/XML-Document-Transform""><custom><groups><group name=""TestGroup1""><values><value key=""Test2"" value=""601"" xdt:Transform=""Replace"" xdt:Locator=""Match(key)"" /></values></group></groups></custom></configuration>"
+		
+		$expectedOutputFile = "<?xml version=""1.0""?><configuration><custom><groups><group name=""TestGroup1""><values><value key=""Test1"" value=""True"" /><value key=""Test2"" value=""601"" /></values></group><group name=""TestGroup2""><values><value key=""Test3"" value=""True"" /></values></group></groups></custom></configuration>"
+		
+		#Mock -ModuleName $sut Set-TransformOutputPath { return "$TestDrive\_transformedConfig\application\Child1\app.config" }
+		
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			$_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should generate a valid transformed output file in a temporary transformed output folder" {
+			#Flatten the transformed XML file, removing white space and carriage returns
+			$actualOutputFile = Get-Content "$testBasePath\_transformedConfig\temp\Project1\application\Child1\app.config" | Foreach {$_.Trim()} | Out-String
+			$actualOutputFile = $actualOutputFile -replace "`t|`n|`r",""
+			$actualOutputFile | Should BeExactly $expectedOutputFile
+        }
+	}	
+}
+
+Describe "New-SolutionConfigFiles child transformed output" {
 	
 	Context "When a base config file is transformed using a child transform file" {
 	

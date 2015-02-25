@@ -29,11 +29,16 @@ function New-SolutionConfigFiles{
 			{
 				$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
 			}
+			$script:processGrandchildFolders = $false
 		}	
 	Process {
 				Try {
 						$basePath = Confirm-Path -path $path
-						$processGrandchildFolders = $false
+						
+						if (Test-Path "$basePath\_transformedConfig") {
+							Write-Verbose "New-SolutionConfigFiles: Deleting existing parent '_transformedConfig folder and contents."
+							Remove-Item "$basePath\_transformedConfig" -Recurse -Force
+						}
 						
 				 		$projectConfigFolders = Get-ProjectConfigFolders -path $basePath
 
@@ -97,8 +102,7 @@ function New-TransformedConfigForProjectConfigFolder {
 	$baseConfigPath = Get-BaseConfigFileForProjectConfigFolder -path $path
 	
 	$childTransformPaths = Get-ChildTransformPathsForProjectConfigFolder -path (Split-Path $baseConfigPath -Parent)
-
-	if (-not($processGrandchildFolders))
+	if (-not($script:processGrandchildFolders))
 	{
 		return New-TransformChildTransformFoldersOnly -childTransformPaths $childTransformPaths
 	}
@@ -111,13 +115,14 @@ function New-TransformChildTransformFoldersOnly {
 			[Parameter(Mandatory = $False )]
 				[array]$childTransformPaths			
 		)	
-		
+
 		ForEach($childTransformPath in $childTransformPaths){
 			
+			$outputTransformPath = $null
 			$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath
 
 			Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
-		}
+		}	
 		return		
 }
 
@@ -127,6 +132,13 @@ function New-TransformChildAndGrandchildTransformFolders {
 				[array]$childTransformPaths			
 		)	
 		
+		ForEach($childTransformPath in $childTransformPaths){
+			
+			$outputTransformPath = $null
+			$outputTransformPath = Set-TransformOutputPath -baseConfigPath $baseConfigPath -childTransformPath $childTransformPath -useTempOutputPath $true
+
+			Invoke-ConfigTransformation -sourceFile $baseConfigPath -transformFile $childTransformPath -outputFile $outputTransformPath
+		}		
 		return
 }
 
@@ -135,29 +147,35 @@ function Set-TransformOutputPath {
 			[Parameter(Mandatory = $True )]
 				[string]$baseConfigPath,
 			[Parameter(Mandatory = $True )]
-				[string]$childTransformPath							
+				[string]$childTransformPath,
+			[Parameter(Mandatory = $False )]
+				[bool]$useTempOutputPath = $false				
+	
 		)	
-		
 		$transformedConfigFolder = "$basePath\_transformedConfig"
+		if ($useTempOutputPath) {
+			$transformedConfigFolder = Join-Path -path $transformedConfigFolder -childpath "temp"
+			Write-Verbose "New-SolutionConfigFiles: Using temporary transformed output folder: $transformedOutputPath"	
+		}
+				
 		If (-not(Test-Path $transformedConfigFolder)) {
-			New-Item -Path $transformedConfigFolder -Force -ItemType Directory
-			Write-Verbose "New-SolutionConfigFiles: Created transform output folder: $basePath\_transformedConfig"
+			New-Item -Path $transformedConfigFolder -Force -ItemType Directory | Out-Null
+			Write-Verbose "New-SolutionConfigFiles: Created parent transform output folder: $transformedConfigFolder"
 		}
 
 		$outputFileName = (Get-Item $baseConfigPath).Name
-		$outputFolder = (Get-Item $childTransformPath).DirectoryName
+		$outputFileParentFolder = (Get-Item $childTransformPath).DirectoryName
+		$outputFileFolderParts = $outputFileParentFolder -Split "_config"
 		
-		$outputFileFolderParts = $outputFolder -Split "_config"
-		
-		$outputFolder = Join-Path -path $transformedConfigFolder -childpath (Split-Path $outputFileFolderParts[0] -leaf)
-		$outputFolder = Join-Path -path $outputFolder -childpath $outputFileFolderParts[1]
-		
+		$outputFolderFirstPart = Join-Path -path $transformedConfigFolder -childpath (Split-Path $outputFileFolderParts[0] -leaf)
+		$outputFolder = Join-Path -path $outputFolderFirstPart -childpath $outputFileFolderParts[1]
 		If (-not(Test-Path $outputFolder)) {
-			New-Item -Path $outputFolder -Force -ItemType Directory
-			$outputFolder = (Resolve-Path $outputFolder)
+			New-Item -Path $outputFolder -Force -ItemType Directory | Out-Null
 			Write-Verbose "New-SolutionConfigFiles: Created transform output folder: $outputFolder"
 		}
-		return Join-Path -path $outputFolder -childpath $outputFileName
+		
+		$output = Join-Path -path $outputFolder -childpath $outputFileName
+		return $output
 }
 
 function Get-BaseConfigFileForProjectConfigFolder {
@@ -190,7 +208,7 @@ function Get-ChildTransformPathsForProjectConfigFolder {
 				[string]$path			
 		)	
 
-	$childTransformFolders = Get-ChildItem $path | Where {$_.Attributes -eq 'Directory'} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+	$childTransformFolders = Get-ChildItem $path | Where {$_.PSIsContainer -eq $true} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
 
 	if (-not([bool]$childTransformFolders)) #Check IsNullOrEmpty
 	{
@@ -211,7 +229,7 @@ function Get-ChildTransformPathsForProjectConfigFolder {
 		}
 		$childTransformPaths += $childTransformPath
 	}
-	$processGrandchildFolders = Confirm-GrandchildTransformFoldersExist -childTransformFolders $childTransformFolders
+	$script:processGrandchildFolders = Confirm-GrandchildTransformFoldersExist -childTransformFolders $childTransformFolders
 	
 	return $childTransformPaths
 }
@@ -228,7 +246,7 @@ function Confirm-GrandchildTransformFoldersExist {
 		ForEach ($childTransformFolder in $childTransformFolders)
 		{
 			#Check for 'grandchild transform' folders.
-			$grandChildTransformFolders = Get-ChildItem $childTransformFolder -attributes D | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
+			$grandChildTransformFolders = Get-ChildItem $childTransformFolder | Where {$_.PSIsContainer -eq $true} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object
 
 			if ([bool]$grandChildTransformFolders) #Check IsNullOrEmpty
 			{	
@@ -269,7 +287,9 @@ function Invoke-ConfigTransformation {
 			[string]$sourceFile,	
 		[Parameter(Mandatory = $True )]
 			[string]$transformFile,
-		[Parameter(Mandatory = $True )]
+		[Parameter(Mandatory = $True,
+					HelpMessage="Please supply a full path")]
+			[ValidateNotNullOrEmpty()] 
 			[string]$outputFile			
 	)
 	
