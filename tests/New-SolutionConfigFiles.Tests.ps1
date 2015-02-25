@@ -36,6 +36,33 @@ Describe "New-SolutionConfigFiles configuration" {
         }
 		
 	}
+	
+	Context "When there is an existing _transformedConfig\temp folder" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "_transformedConfig" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp\Project1" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp\Project1\application" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp\Project1\application\Child1" -Path $TestDrive -ItemType 	Directory	
+		New-Item -Name "_transformedConfig\temp\Project1\application\Child2" -Path $TestDrive -ItemType Directory
+		New-Item -Name "_transformedConfig\temp\Project1\application\Child2\app.config" -Path $TestDrive -ItemType File 			
+		$testBasePath = "$TestDrive"	
+
+		try {
+			New-SolutionConfigFiles -path $testBasePath -verbose
+		}
+		catch {
+			throw
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Should remove the _transformedConfig\temp folder and contents" {
+            Test-Path "$testBasePath\_transformedConfig\temp" | Should Be $false
+        }
+
+	}	
 
 	Context "When there is configuration to transform" {
 	

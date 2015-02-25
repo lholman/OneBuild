@@ -55,6 +55,11 @@ function New-SolutionConfigFiles{
 						{
 							New-TransformedConfigForProjectConfigFolder -path $projectConfigFolder							
 						}
+						
+						if (Test-Path "$basePath\_transformedConfig\temp") {
+							Write-Verbose "New-SolutionConfigFiles: Deleting existing temporary  '_transformedConfig\temp folder and contents."
+							Remove-Item "$basePath\_transformedConfig\temp" -Recurse -Force
+						}						
 					
 				} catch [Exception] {
 					throw "An error occurred generating config files under path: $basePath. `r`n $_"
