@@ -66,6 +66,7 @@ function New-TransformedConfigFile{
 						
 						if ($outputFile -eq "")
 						{
+
 							#Set the path to the calling scripts path (using Resolve-Path .)
 							$outputFile = "$basePath\$transformedFilesFolder\Output.xml"
 						}
@@ -76,7 +77,8 @@ function New-TransformedConfigFile{
 						
 						if ($cttPath -eq "")
 						{
-							$cttPath = Confirm-Path -path "C:\Development\github\OneBuild\lib\ctt.exe"
+							$callingScriptPath = Resolve-Path .
+							$cttPath = Confirm-Path -path "$callingScriptPath\lib\ctt.exe"
 							Write-Verbose "New-TransformedConfigFile: 'ctt.exe' command line path set to: $cttPath"
 						}
 
