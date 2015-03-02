@@ -17,7 +17,7 @@
       <dependency id="NuGet.CommandLine" version="2.7.3" />
       <dependency id="NUnit.Runners" version="2.6.3" />
 	  <dependency id="Invoke-Build" version="2.9.12" />  
-	  <dependency id="ConfigTransformationTool" version="1.2.0" />
+	  <dependency id="ConfigTransformationTool" version="1.5.0" />
     </dependencies>
   </metadata>
   <files>
