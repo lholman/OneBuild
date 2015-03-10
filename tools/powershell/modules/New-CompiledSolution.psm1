@@ -7,8 +7,8 @@ function New-CompiledSolution{
 	Executes MSBuild.exe to Clean and Rebuild a Visual Studio solution file to generate compiled .NET assemblies. Solution file to build is identified by convention, also allows optional passing of a target configuration (Debug|Release etc).
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
-.PARAMETER msBuildPath
-	Optional. The full path to msbuild.exe.  Defaults to 'C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe'.	
+.PARAMETER windowsPath
+	Optional. The full path to Windows on the host OS.  Defaults to 'C:\Windows'.	
 .PARAMETER configMode
 	Optional. The build Configuration to be passed to msbuild during compilation. Examples include 'Debug' or 'Release'.  Defaults to 'Release' 'C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe'.	
 .PARAMETER nuGetPath
@@ -29,7 +29,7 @@ function New-CompiledSolution{
 		Param(
 			[Parameter(Mandatory = $False )]
 				[string]
-				$msBuildPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe",	
+				$windowsPath = $env:windir,	
 			[Parameter(Mandatory = $False )]
 				[string]
 				$configMode = "Release",	
@@ -42,14 +42,18 @@ function New-CompiledSolution{
 			)			
 	Begin {
 			$DebugPreference = "Continue"
+			if (-not $PSBoundParameters.ContainsKey('Verbose'))
+			{
+				$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
+			}			
 		}	
 	Process {
 				Try 
 				{
 					$basePath = Confirm-Path -path $path
 				
-					Get-LatestMSBuildPath
-					
+					$script:msbuildPath = Get-LatestInstalledMSBuildPath
+ 					
 					$nuGetPath = Set-NuGetPath $nuGetPath
 
 					$solutionFile = Get-FirstSolutionFile
@@ -58,12 +62,12 @@ function New-CompiledSolution{
 					{
 						throw "No solution file found to compile, use the -path parameter if the target solution file isn't in the solution root"
 					}
-					
+
 					Write-Warning "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
 										
 					Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
 					
-					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
+					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode -msbuildPath $script:msbuildPath
 					if ($result -ne $null) 
 					{
 						throw "Whilst executing MsBuild for solution file $solutionFile, MsBuild.exe exited with error message: $result"
@@ -71,14 +75,42 @@ function New-CompiledSolution{
 				
 				}
 				catch [Exception] {
-					throw "Error compiling solution file: $solutionFile. `r`n $_.Exception.ToString()"
+					throw "Error executing New-CompiledSolution: $_"
 				}
 				
 				return
 		}
 }
 
-function Get-LatestMSBuildPath {
+function Get-LatestInstalledMSBuildPath {
+
+	Write-Verbose "New-CompiledSolution\Get-LatestInstalledMSBuildPath: Searching machine for the latest pre-2013 MSBuild version."
+	Write-Verbose "New-CompiledSolution\Get-LatestInstalledMSBuildPath: Windows path: $windowsPath"
+
+	#Before Visual Studio 2013, MSBuild was included with the .NET Framework. See https://github.com/lholman/OneBuild/issues/12#issuecomment-67883504 for more details.
+	$latestFrameworkMSBuildVersionPath = $null 
+	
+	#From Visual Studio 2013 onwards, MSBuild is included with Visual Studio. See https://github.com/lholman/OneBuild/issues/12#issuecomment-67883504 for more details.
+	$latestVisualStudioMSBuildVersionPath = $null 	
+	
+	if (-not(Test-Path "$windowsPath\Microsoft.NET\Framework64"))
+	{
+		throw "No 64-bit .NET Framework (C:\Windows\Microsoft.NET\Framework64) installation found on the local system. OneBuild assumes a 64-bit Windows OS install. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
+	}
+	
+	$latestFrameworkMSBuildVersionPath = Get-ChildItem "$windowsPath\Microsoft.NET\Framework64" | Where-Object {$_.PSIsContainer -eq $true} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
+	
+	if ($latestFrameworkMSBuildVersionPath -ne $null)
+	{
+		Write-Verbose "New-CompiledSolution\Get-LatestInstalledMSBuildPath: Latest installed (Pre-Visual Studio 2013) MSBuild version: $latestFrameworkMSBuildVersionPath"
+	}
+	
+	if (Test-Path "$latestFrameworkMSBuildVersionPath\msbuild.exe") {
+	
+		return "$latestFrameworkMSBuildVersionPath\msbuild.exe"
+	}
+	
+	throw "No known version of MSBuild installed on the local system. Please install MSBuild and try running OneBuild again. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail."
 
 }
 
@@ -150,7 +182,9 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$solutionFile,	
 		[Parameter(Mandatory = $True )]
-			[string]$configMode				
+			[string]$configMode,	
+		[Parameter(Mandatory = $True )]
+			[string]$msbuildPath					
 	)
 	Write-Warning "Building '$($solutionFile)' in '$($configMode)' mode"
 	$output = & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1 

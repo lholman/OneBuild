@@ -8,7 +8,129 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "New-CompiledSolution. Check for solution files" {
+Describe "New-CompiledSolution MSBuild installation" {
+
+		New-Item -Name "Windows" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Windows\Microsoft.NET" -Path $TestDrive -ItemType Directory
+
+	Context "When a 64-bit .NET framework is NOT installed" {
+	
+		Import-Module "$baseModulePath\$sut"
+		
+		$result = $null
+		try {
+			$result = New-CompiledSolution -windowsPath "$TestDrive\Windows" -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "Error executing New-CompiledSolution: No 64-bit .NET Framework \(C:\\Windows\\Microsoft.NET\\Framework64\) installation found on the local system. OneBuild assumes a 64-bit Windows OS install. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues" 	
+			$result | Should Match $expectedErrorMessage
+		}	
+		
+	}
+		
+	Context "When MSBuild is installed" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "Windows\Microsoft.NET\Framework64" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727\msbuild.exe" -Path $TestDrive -ItemType File 
+		$testBasePath = "$TestDrive"	
+		
+		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
+            $msbuildPath -eq "$testBasePath\Windows\Microsoft.NET\Framework64\v2.0.50727\msbuild.exe"}		
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
+		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
+			
+		try {
+			New-CompiledSolution -windowsPath "$testBasePath\Windows" -verbose
+		}
+		catch {
+			throw $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Invoke-MsBuildCompilationForSolution is invoked with the correct msbuild path" {
+			Assert-VerifiableMocks
+		}	
+	}
+
+	Context "When MSBuild is NOT installed" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "Windows\Microsoft.NET\Framework64" -Path $TestDrive -ItemType Directory
+		
+		$result = $null
+		try {
+			$result = New-CompiledSolution -windowsPath "$TestDrive\Windows" -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "No known version of MSBuild installed on the local system. Please install MSBuild and try running OneBuild again. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail." -replace "\\","\\"			
+			$result | Should Match $expectedErrorMessage
+		}	
+	}
+	
+
+}
+
+Describe "New-CompiledSolution Select MSBuild version" {
+	
+	Context "When there are multiple versions of pre-VS 2013 MSBuild available" {
+	
+		Import-Module "$baseModulePath\$sut"
+		New-Item -Name "Windows" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Windows\Microsoft.NET" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Windows\Microsoft.NET\Framework64" -Path $TestDrive -ItemType Directory
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727\msbuild.exe" -Path $TestDrive -ItemType File 
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v4.0.30319" -Path $TestDrive -ItemType Directory			
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe" -Path $TestDrive -ItemType File 
+		
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
+		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
+		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
+            $msbuildPath -eq "$TestDrive\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe"}		
+
+		try {
+			New-CompiledSolution -windowsPath "$TestDrive\Windows" -verbose
+		}
+		catch {
+			throw $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		
+		It "Invoke-MsBuildCompilationForSolution is invoked with the latest version of MSBuild" {
+			Assert-VerifiableMocks
+		}
+		
+	}	
+
+		
+	#Context ""
+	#Context "When not running on a 64 bit version of Windows"
+	#Context "When not running on 64 bit architecture??"
+	#Context "When pre and post 2013 MSBuild installed"
+	
+}
+
+Describe "New-CompiledSolution check for solution file" {
 	Context "When there is a solution file" {
 	
 		Import-Module "$baseModulePath\$sut"
@@ -21,7 +143,7 @@ Describe "New-CompiledSolution. Check for solution files" {
 		
 		$result = 0
 		try {
-			$result = New-CompiledSolution
+			$result = New-CompiledSolution -verbose
 		}
 		catch {
 			throw
@@ -50,7 +172,7 @@ Describe "New-CompiledSolution. Check for solution files" {
 		
 		$result = ""
 		try {
-			$result = New-CompiledSolution
+			$result = New-CompiledSolution -verbose
 		}
 		catch {
 			$result = "$_."
@@ -65,36 +187,6 @@ Describe "New-CompiledSolution. Check for solution files" {
 	}
 }
 
-Describe "New-CompiledSolution. Select the correct MSBuild version to use for compilation" {
-	Context "When there are multiple versions of MSBuild available" {
-	
-		Import-Module "$baseModulePath\$sut"
-		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
-		Mock -ModuleName $sut Get-LatestMSBuildPath
-		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
-		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { }
-		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
-            $Message -eq "Using Configuration mode 'Release'. Modify this by passing in a value for the parameter '-configMode'"
-        }
-		
-		$result = 0
-		try {
-			$result = New-CompiledSolution
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-		
-		It "Should call Get-LatestMSBuildPath and return the path to the latest version of MSBuild" {
-            Assert-MockCalled Get-LatestMSBuildPath -ModuleName $sut -Times 1
-        }
-		
-	}
-
-}
 <#
 Describe "New-CompiledSolution_2" {	
 	Context "When there is an error compiling a solution file" {

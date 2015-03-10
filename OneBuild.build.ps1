@@ -25,7 +25,7 @@ if ((Test-Path -path "$BuildRoot\tools\powershell\modules" ) -eq $True)
 }
 
 function Enter-Build {
-	Write-Output "Base module path: $baseModulePath"
+	Write-Warning "Base module path: $baseModulePath"
 }
 
 $assemblyInformationalVersion = ""
