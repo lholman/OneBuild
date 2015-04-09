@@ -108,7 +108,7 @@ function Set-BuildNumberWithGitCommitDetail{
 
 				#Enumerate through all AssemblyInfo.cs files, updating the AssemblyVersion, AssemblyFileVersion and AssemblyInformationalVersion accordingly, 
 				#this is subsequently reverted within Invoke-CompileSolution once the compilation is complete.
-				$assemblyInfoFiles = Get-ChildItem $gitRepoPath -recurse -include AssemblyInfo.cs
+				$assemblyInfoFiles = Get-ChildItem $gitRepoPath -recurse -include AssemblyInfo.cs,AssemblyInfo.vb
 				ForEach ($assemblyInfoFile in $assemblyInfoFiles)
 				{
 					Try	{
