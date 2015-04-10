@@ -1,7 +1,7 @@
 ﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".").Replace(".ps1","")
 
-Describe "OneBuild.build Check bitness" {
+Describe "Confirm-WindowsBitness Check bitness" {
 
 	$invokeBuildPath = Get-ChildItem packages | Where-Object {$_.Name -like 'Invoke-Build*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}; 
 	#$sut = "$invokeBuildPath\tools\Invoke-Build.ps1"
@@ -10,12 +10,18 @@ Describe "OneBuild.build Check bitness" {
 	
 	Context "When OS is 32 bit" {
 	
-		#. "$here\..\OneBuild.build.ps1"
-		Mock Get-WindowsBitness { return "32-Bit"}
+		Import-Module "$baseModulePath\$sut"
+		Mock -ModuleName $sut Get-WindowsOSBitness { return "32-Bit"}
 		
-		#Invoke the OneBuild Invoke-Build build script
-		
-		$result = & $invokeBuildPath\tools\Invoke-Build.ps1 Invoke-Commit "$here\..\OneBuild.build.ps1" -verbose
+		try {
+			$result = Confirm-WindowsBitness -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
 		
 		It "Exits OneBuild with a descriptive terminating error" {
 			

@@ -26,23 +26,10 @@ if ((Test-Path -path "$BuildRoot\tools\powershell\modules" ) -eq $True)
 
 function Enter-Build {
 
-	$windowsBitness = Get-WindowsBitness
-	Write-Verbose "Windows bitness: $windowsBitness"
-	Write-Verbose "Base module path: $baseModulePath"
-	
-	if ($windowsBitness -ne "64-Bit")
-	{
-		throw "Error running OneBuild: OneBuild assumes a 64-bit Windows OS install. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
-	}
-}
-
-function Get-WindowsBitness {
-
-	if ((Get-WmiObject -Class Win32_OperatingSystem -ComputerName localhost -ea 0).OSArchitecture -eq '64-bit') {            
-		return "64-Bit"            
-	} else  {            
-		return "32-Bit"            
-	} 
+	#Checks Windows Operating System bitness for compatibility with OneBuild.
+	Import-Module "$baseModulePath\Confirm-WindowsBitness.psm1"
+	Confirm-WindowsBitness -verbose
+	Remove-Module Confirm-WindowsBitness
 
 }
 
