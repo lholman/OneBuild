@@ -11,7 +11,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>OneBuild is a modular set of .NET solution build scripts written in PowerShell. Following the proven Deployment Pipeline approach to software build and delivery OneBuild aims to make the Commit (versioning, compilation, unit testing and packaging of binaries) a standard and simple exercise. Being convention based and therefore requiring no configuration allows OneBuild to build any target .NET solution out of the box, assuming the solution follows some basic convention patterns. OneBuild is proud to rely on Invoke-Build (https://github.com/nightroman/Invoke-Build) for task automation.</description>
     <summary>A modular set of convention based .NET solution build scripts written in PowerShell.</summary>
-    <releaseNotes />
+    <releaseNotes>This release of OneBuild adds support for consistent versioning of VisualBasic.NET projects within a Visual Studio solution.
+	(bug) #42 - Support VB projects
+	<releaseNotes/>
     <copyright>Copyright 2014</copyright>
     <dependencies>
       <dependency id="NuGet.CommandLine" version="2.7.3" />
