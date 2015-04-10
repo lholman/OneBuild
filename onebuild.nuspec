@@ -13,7 +13,7 @@
     <summary>A modular set of convention based .NET solution build scripts written in PowerShell.</summary>
     <releaseNotes>This release of OneBuild adds support for consistent versioning of VisualBasic.NET projects within a Visual Studio solution.
 	(bug) #42 - Support VB projects
-	<releaseNotes/>
+	</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <dependencies>
       <dependency id="NuGet.CommandLine" version="2.7.3" />
