@@ -102,7 +102,7 @@ function Get-LatestInstalledMSBuildPath {
 			
 			$latestVisualStudioMSBuildVersionPath = Get-ChildItem "$programFilesx86Path\MSBuild" | Where-Object {$_.PSIsContainer -eq $true}
 			
-			$latestVisualStudioMSBuildVersionPath = $latestVisualStudioMSBuildVersionPath | Where-Object {$_.Name -match "\d"} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
+			$latestVisualStudioMSBuildVersionPath = $latestVisualStudioMSBuildVersionPath | Where-Object {$_.Name -match "^\d"} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
 			
 			if ($latestVisualStudioMSBuildVersionPath -ne $null)
 			{

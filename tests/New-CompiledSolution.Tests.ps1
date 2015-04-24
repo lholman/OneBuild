@@ -79,6 +79,8 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 		New-Item -Name "Windows\Microsoft.NET\Framework64" -Path $TestDrive -ItemType Directory
 		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727" -Path $TestDrive -ItemType Directory	
 		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727\msbuild.exe" -Path $TestDrive -ItemType File 
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v3.5" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Windows\Microsoft.NET\Framework64\v3.5\msbuild.exe" -Path $TestDrive -ItemType File 
 		New-Item -Name "Windows\Microsoft.NET\Framework64\v4.0.30319" -Path $TestDrive -ItemType Directory			
 		New-Item -Name "Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe" -Path $TestDrive -ItemType File 
 		
@@ -154,7 +156,9 @@ Describe "New-CompiledSolution Select Visual Studio MSBuild version" {
 		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
 		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
 		New-Item -Name "Program Files (x86)\MSBuild\Microsoft\" -Path $TestDrive -ItemType Directory #An example non-[ToolsVersion] folder 	
-		New-Item -Name "Program Files (x86)\MSBuild\Microsoft\Windows Workflow Foundation" -Path $TestDrive -ItemType Directory		
+		New-Item -Name "Program Files (x86)\MSBuild\Microsoft\Windows Workflow Foundation" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Program Files (x86)\MSBuild\v3.5" -Path $TestDrive -ItemType Directory	
+		New-Item -Name "Program Files (x86)\MSBuild\v3.5\msbuild.exe" -Path $TestDrive -ItemType File 		
 		$testBasePath = "$TestDrive"	
 		
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
