@@ -58,4 +58,14 @@ There are a number of benefits of having a build process that can be run in its 
 * **Improve quality**. If we treat the build process as code then we can also test it as part of its own pipeline: See our [Pester](https://github.com/nightroman/Invoke-Build) [unit tests here](https://github.com/lholman/OneBuild/tree/master/tests)   
 * **Decouple yourself from the CI server vendor**. I love [TeamCity](http://jetbrains.com/teamcity), have a long running tempestuous relationship with Team Foundation Server (TFS), have had a few flings with [Jenkins](http://jenkinsci.com) and chatted up the likes of [AppVeyor](http://www.appveyor.com) and various other CI and build server products. The one thing they all have in common is they give you an inch, but allow you to take a mile. It is incredibly easy to use their "simple" out-the-box, add-on tasks, runners and plug-ins, however this means it is almost impossible to move to another CI server technology or run a build in its entirety locally. 
 
+## Contributing to OneBuld
 
+### Running OneBuild's Unit Tests
+
+OneBuild uses Pester to run all of it's unit tests. These can be invoked by running
+
+```
+C:\Path_To_Your_OneBuild_Repository\> OneBuild.bat -task Invoke-OneBuildUnitTests
+```
+
+This will run all of the tests in the **.\tests\** folder that Pester can find. This is the same system that the build system will be using when building OneBuild.
