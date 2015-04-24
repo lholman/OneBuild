@@ -68,14 +68,18 @@ function New-CompiledSolution{
 
 					Write-Warning "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
 										
-					Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
+					$nugetError = Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
+					
+					if ($nugetError -ne $null) 
+					{
+						throw "Whilst executing NuGet to restore dependencies for solution file $solutionFile, NuGet.exe exited with error message: $nugetError"
+					}
 					
 					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode -msbuildPath $script:msbuildPath
 					if ($result -ne $null) 
 					{
 						throw "Whilst executing MsBuild for solution file $solutionFile, MsBuild.exe exited with error message: $result"
 					}
-				
 				}
 				catch [Exception] {
 					throw "Error executing New-CompiledSolution: $_"
@@ -96,7 +100,9 @@ function Get-LatestInstalledMSBuildPath {
 			#From Visual Studio 2013 onwards, MSBuild is included with Visual Studio. See https://github.com/lholman/OneBuild/issues/12#issuecomment-67883504 for more details.
 			$latestVisualStudioMSBuildVersionPath = $null 	
 			
-			$latestVisualStudioMSBuildVersionPath = Get-ChildItem "$programFilesx86Path\MSBuild" | Where-Object {$_.PSIsContainer -eq $true} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
+			$latestVisualStudioMSBuildVersionPath = Get-ChildItem "$programFilesx86Path\MSBuild" | Where-Object {$_.PSIsContainer -eq $true}
+			
+			$latestVisualStudioMSBuildVersionPath = $latestVisualStudioMSBuildVersionPath | Where-Object {$_.Name -match "\d"} | Sort-Object $_.FullName -Descending | foreach {$_.FullName} | Select-Object -First 1 
 			
 			if ($latestVisualStudioMSBuildVersionPath -ne $null)
 			{
@@ -127,7 +133,7 @@ function Get-LatestInstalledMSBuildPath {
 		
 	}
 	
-	throw "No 64-bit .NET Framework (C:\Windows\Microsoft.NET\Framework64) or 64-bit Visual Studio (C:\Program Files (x86)\MSBuild) installation of MSBuild found on the local system. OneBuild assumes a 64-bit Windows OS install. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
+	throw "No 64-bit .NET Framework (C:\Windows\Microsoft.NET\Framework64) or 64-bit Visual Studio (C:\Program Files (x86)\MSBuild) installation of MSBuild found on the local system. OneBuild also assumes a 64-bit Windows OS install. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
 }
 
 function Confirm-Path {
@@ -182,15 +188,18 @@ function Restore-SolutionNuGetPackages {
 		[Parameter(Mandatory = $True )]
 			[string]$nuGetPath				
 	)	
-	Write-Host "Restoring NuGet packages for ""$solutionFile""."
+	Write-Warning "Restoring NuGet packages for ""$solutionFile""."
 	$output = & $nugetPath restore $solutionFile 2>&1 
 	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
-	
-	if ($err)
+
+	if ($LASTEXITCODE -eq 1)
 	{
-		Write-Host $output
-		Return $err
-	}
+		return $output
+	}	
+	
+	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
+	Write-Host "NuGet output: $output"	
+	return
 }
 
 function Invoke-MsBuildCompilationForSolution {
@@ -213,7 +222,7 @@ function Invoke-MsBuildCompilationForSolution {
 	}
 	
 	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
-	Write-Host "output: $output"
+	Write-Host "MSBuild output: $output"
 	return
 }
 

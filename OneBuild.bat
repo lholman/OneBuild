@@ -32,7 +32,7 @@ GOTO PARAM_LOOP_START
 ECHO task = %TASK%
 ECHO configuration = %CONFIGURATION%
 ECHO buildcounter = %BUILDCOUNTER%
-ECHO testName = %TESTNAME%
+ECHO testname = %TESTNAME%
 
 powershell -NoProfile -ExecutionPolicy bypass -command "$invokeBuildPath = Get-ChildItem packages | Where-Object {$_.Name -like 'Invoke-Build*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}; Write-Host """Found Invoke-Build at: $invokeBuildPath"""; & {& $invokeBuildPath\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% -testName %TESTNAME% .\OneBuild.build.ps1}" 
 
