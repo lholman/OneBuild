@@ -160,7 +160,7 @@ function Invoke-MsBuildCompilationForSolution {
 	)
 	
 	Write-Verbose "Building '$($solutionFile)' in '$($configMode)' mode"
-	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
+	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /nr:false /m 2>&1) -join "`r`n"
 	
 	if ($LASTEXITCODE -eq 1)
 	{
