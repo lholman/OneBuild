@@ -4,7 +4,7 @@ function New-CompiledSolution{
 .SYNOPSIS
     Executes MSBuild.exe to Clean and Rebuild a Visual Studio solution file to generate compiled .NET assemblies for a target configuration (Debug|Release etc).
 .DESCRIPTION
-	Executes MSBuild.exe to Clean and Rebuild a Visual Studio solution file to generate compiled .NET assemblies. Solution file to build is identified by convention, also allows optional passing of a target configuration (Debug|Release etc).
+	Executes MSBuild.exe to Clean and Rebuild a Visual Studio solution file to generate compiled .NET assemblies. MsBuild version and Solution file to build are identified by convention, also allows optional passing of a target configuration (Debug|Release etc).
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
 .PARAMETER windowsPath
@@ -29,12 +29,6 @@ function New-CompiledSolution{
 		Param(
 			[Parameter(Mandatory = $False )]
 				[string]
-				$windowsPath = $env:windir,	
-			[Parameter(Mandatory = $False )]
-				[string]
-				$programFilesx86Path = ${env:ProgramFiles(x86)},					
-			[Parameter(Mandatory = $False )]
-				[string]
 				$configMode = "Release",	
 			[Parameter(Mandatory = $False )]	
 				[string]
@@ -55,7 +49,7 @@ function New-CompiledSolution{
 				{
 					$basePath = Confirm-Path -path $path
 				
-					$script:msbuildPath = Get-LatestInstalledMSBuildPath
+					$script:msbuildPath = Get-LatestInstalled64BitMSBuildPathFromRegistry
  					
 					$nuGetPath = Set-NuGetPath $nuGetPath
 
@@ -89,6 +83,54 @@ function New-CompiledSolution{
 		}
 }
 
+function Get-64BitMsBuildRegistryHive {
+
+	$msBuildRegistryHive64Bit = "Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\"
+	
+	return Get-ChildItem $msBuildRegistryHive64Bit -ErrorAction SilentlyContinue | ? { ($_.PSChildName -match "^\d") } | ? {$_.property -contains "MSBuildToolsPath"} | sort {[int]($_.PSChildName)} -descending
+}
+
+function Get-LatestMsBuildToolsVersion {
+	Param(			
+		[Parameter(
+			Mandatory = $True )]
+			[Array]$msBuildToolsVersions			
+		)	
+	#Here we remove any version of msbuild that were shipped with .NET Framework version 2.0 and lower. .NET 2.0 is 	
+	#if ($msBuildToolsVersions
+	
+	$latestMsBuildToolsVersion = $msBuildToolsVersions | Select-Object -First 1
+	return (Get-ItemProperty $latestMsBuildToolsVersion.PSPath "MSBuildToolsPath")
+}
+
+function Get-LatestInstalled64BitMSBuildPathFromRegistry {
+	
+	$errorContext = "New-CompiledSolution:Get-LatestInstalled64BitMSBuildPathFromRegistry:"
+	
+	$allInstalled64BitMsBuildToolsVersions = Get-64BitMsBuildRegistryHive
+	
+	if ($allInstalled64BitMsBuildToolsVersions -eq $null)
+	{
+		throw "No 64-bit .NET Framework (C:\Windows\Microsoft.NET\Framework64) or 64-bit Visual Studio (C:\Program Files (x86)\MSBuild) installation of MSBuild found on the local system. OneBuild also assumes a 64-bit Windows OS install. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
+	}
+
+	Write-Verbose "$errorContext $($allInstalled64BitMsBuildToolsVersions.Count)"
+	
+	$latestInstalledMsBuildToolsVersion = Get-LatestMsBuildToolsVersion -msBuildToolsVersions $allInstalled64BitMsBuildToolsVersions
+	$latestMsBuildToolsVersion = $latestInstalledMsBuildToolsVersion.PSChildName
+	Write-Verbose "$errorContext $latestMsBuildToolsVersion"
+
+	$msBuildToolsPath = $latestInstalledMsBuildToolsVersion.MSBuildToolsPath
+	Write-Verbose "$errorContext $msBuildToolsPath"
+	
+	$msBuildPath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
+	if (Test-Path $msBuildPath) {
+		return $msBuildPath
+	}
+
+	throw "Highest identified MSBuildTools version ($latestMsBuildToolsVersion) contains NO 64-bit MSBuild assembly (\bin\amd64\MSBuild.exe). OneBuild assumes a 64-bit MSBuild installation, either .NET Framework or Visual Studio. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail."
+}
+
 function Get-LatestInstalledMSBuildPath {
 
 	Write-Verbose "New-CompiledSolution\Get-LatestInstalledMSBuildPath: Searching for the latest installed version of MSBuild. Starting with Visual Studio MSBuild (ToolsVersion >= 12.0) and falling back to .NET Framework MSBuild (ToolsVersions 2.0,3.5,4.0)"
@@ -111,6 +153,9 @@ function Get-LatestInstalledMSBuildPath {
 			
 			if (Test-Path "$latestVisualStudioMSBuildVersionPath\bin\amd64\msbuild.exe") {
 				return "$latestVisualStudioMSBuildVersionPath\bin\amd64\msbuild.exe"
+			}
+			else { 
+				throw "Highest identified Visual Studio MSBuild version ($latestVisualStudioMSBuildVersionPath) contains NO 64-bit MSBuild assembly (\bin\amd64\MSBuild.exe). OneBuild assumes a 64-bit MSBuild installation, either .NET Framework or Visual Studio. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail."
 			}
 			
 			
@@ -209,10 +254,13 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$configMode,	
 		[Parameter(Mandatory = $True )]
-			[string]$msbuildPath					
+			[string]$msBuildPath					
 	)
-	Write-Warning "Building '$($solutionFile)' in '$($configMode)' mode"
-	$output = & $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1 
+	$errorContext = "New-CompiledSolution:Invoke-MsBuildCompilationForSolution:"
+	
+	Write-Verbose "$errorContext Using MSBuild from: $msBuildPath" 
+	Write-Verbose "$errorContext Building '$($solutionFile)' in '$($configMode)' mode"
+	$output = & $msBuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1 
 	
 	#$err = $output | ? {$_.GetType().Name -eq "ErrorRecord"}
 	
