@@ -42,11 +42,7 @@ function New-CompiledSolution{
 			if (-not $PSBoundParameters.ContainsKey('Verbose'))
 			{
 				$VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
-<<<<<<< HEAD
 			}			
-=======
-			}
->>>>>>> master
 		}	
 	Process {
 				Try 
@@ -63,7 +59,6 @@ function New-CompiledSolution{
 					{
 						throw "No solution file found to compile, use the -path parameter if the target solution file isn't in the solution root"
 					}
-<<<<<<< HEAD
 
 					Write-Warning "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
 										
@@ -75,30 +70,13 @@ function New-CompiledSolution{
 					}
 					
 					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode -msbuildPath $script:msbuildPath
-=======
-					
-					Write-Verbose "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
-										
-					$result = Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
-					if ($result -ne $null) 
-					{
-						throw "Whilst restoring Nuget packages for solution file $solutionFile, nuget.exe exited with error message: $result"
-					}
-
-					$result = $null
-					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode
->>>>>>> master
 					if ($result -ne $null) 
 					{
 						throw "Whilst executing MsBuild for solution file $solutionFile, MsBuild.exe exited with error message: $result"
 					}
 				}
 				catch [Exception] {
-<<<<<<< HEAD
 					throw "Error executing New-CompiledSolution: $_"
-=======
-					throw "Error compiling solution file: $solutionFile. `r`n $_"
->>>>>>> master
 				}
 				
 				return
@@ -255,30 +233,17 @@ function Restore-SolutionNuGetPackages {
 		[Parameter(Mandatory = $True )]
 			[string]$nuGetPath				
 	)	
-<<<<<<< HEAD
 	Write-Warning "Restoring NuGet packages for ""$solutionFile""."
-=======
-	Write-Verbose "Restoring NuGet packages for ""$solutionFile""."
->>>>>>> master
 	$output = & $nugetPath restore $solutionFile 2>&1 
 	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
 
 	if ($LASTEXITCODE -eq 1)
 	{
-<<<<<<< HEAD
 		return $output
 	}	
 	
 	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
 	Write-Host "NuGet output: $output"	
-=======
-		return $err
-	}
-
-	#As we've re-directed error output to standard output (stdout) using '2>&1', so that we can save it to a variable, we have effectively suppressed stdout, therefore we write $output to the Verbose stream here. 
-	$VerbosePreference = "Continue"
-	Write-Verbose ($output | Out-String)
->>>>>>> master
 	return
 }
 
@@ -291,30 +256,21 @@ function Invoke-MsBuildCompilationForSolution {
 		[Parameter(Mandatory = $True )]
 			[string]$msBuildPath					
 	)
-<<<<<<< HEAD
 	$errorContext = "New-CompiledSolution:Invoke-MsBuildCompilationForSolution:"
 	
 	Write-Verbose "$errorContext Using MSBuild from: $msBuildPath" 
 	Write-Verbose "$errorContext Building '$($solutionFile)' in '$($configMode)' mode"
 	$output = & $msBuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:PlatformTarget=AnyCPU /m 2>&1 
-=======
->>>>>>> master
 	
-	Write-Verbose "Building '$($solutionFile)' in '$($configMode)' mode"
-	$output = (& $msbuildPath $solutionFile /t:ReBuild /t:Clean /p:Configuration=$configMode /p:RunOctoPack=true /p:PlatformTarget=AnyCPU /m 2>&1) -join "`r`n"
+	#$err = $output | ? {$_.GetType().Name -eq "ErrorRecord"}
 	
 	if ($LASTEXITCODE -eq 1)
 	{
 		return $output
 	}
-<<<<<<< HEAD
 	
 	#As we've re-directed error output to standard output (stdout) using '2>&1', we have effectively suppressed stdout, therefore we write $output to Host here. 
 	Write-Host "MSBuild output: $output"
-=======
-	$VerbosePreference = "Continue"
-	Write-Verbose ($output | Out-String)
->>>>>>> master
 	return
 }
 
