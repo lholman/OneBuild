@@ -90,7 +90,7 @@ function Get-64BitMsBuildRegistryHive {
 	return Get-ChildItem $msBuildRegistryHive64Bit -ErrorAction SilentlyContinue | ? { ($_.PSChildName -match "^\d") } | ? {$_.property -contains "MSBuildToolsPath"} | sort {[int]($_.PSChildName)} -descending
 }
 
-function Get-LatestMsBuildToolsVersion {
+function Get-LatestMsBuildToolsVersionFromRegistry {
 	Param(			
 		[Parameter(
 			Mandatory = $True )]
@@ -99,8 +99,8 @@ function Get-LatestMsBuildToolsVersion {
 	#Here we remove any version of msbuild that were shipped with .NET Framework version 2.0 and lower. .NET 2.0 is 	
 	#if ($msBuildToolsVersions
 	
-	$latestMsBuildToolsVersion = $msBuildToolsVersions | Select-Object -First 1
-	return (Get-ItemProperty $latestMsBuildToolsVersion.PSPath "MSBuildToolsPath")
+	$latestMsBuildToolsVersion = $msBuildToolsVersions | Select-Object -Last 1
+	return $latestMsBuildToolsVersion
 }
 
 function Get-LatestInstalled64BitMSBuildPathFromRegistry {
@@ -114,13 +114,15 @@ function Get-LatestInstalled64BitMSBuildPathFromRegistry {
 		throw "No 64-bit .NET Framework (C:\Windows\Microsoft.NET\Framework64) or 64-bit Visual Studio (C:\Program Files (x86)\MSBuild) installation of MSBuild found on the local system. OneBuild also assumes a 64-bit Windows OS install. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
 	}
 
-	Write-Verbose "$errorContext $($allInstalled64BitMsBuildToolsVersions.Count)"
+	#Write-Verbose "$errorContext $($allInstalled64BitMsBuildToolsVersions.Count)"
 	
-	$latestInstalledMsBuildToolsVersion = Get-LatestMsBuildToolsVersion -msBuildToolsVersions $allInstalled64BitMsBuildToolsVersions
-	$latestMsBuildToolsVersion = $latestInstalledMsBuildToolsVersion.PSChildName
+	$latestInstalledMsBuildToolsVersion = Get-LatestMsBuildToolsVersionFromRegistry -msBuildToolsVersions $allInstalled64BitMsBuildToolsVersions
+	$latestInstalledMsBuildToolsPath = Get-ItemProperty -Path $latestInstalledMsBuildToolsVersion.PSPath -Name "MSBuildToolsPath"
+	
+	$latestMsBuildToolsVersion = $latestInstalledMsBuildToolsPath.PSChildName
 	Write-Verbose "$errorContext $latestMsBuildToolsVersion"
 
-	$msBuildToolsPath = $latestInstalledMsBuildToolsVersion.MSBuildToolsPath
+	$msBuildToolsPath = $latestInstalledMsBuildToolsPath.MSBuildToolsPath
 	Write-Verbose "$errorContext $msBuildToolsPath"
 	
 	$msBuildPath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
