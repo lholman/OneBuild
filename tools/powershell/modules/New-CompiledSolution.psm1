@@ -99,7 +99,7 @@ function Get-LatestMsBuildToolsVersionFromRegistry {
 	#Here we remove any version of msbuild that were shipped with .NET Framework version 2.0 and lower. .NET 2.0 is 	
 	#if ($msBuildToolsVersions
 	
-	$latestMsBuildToolsVersion = $msBuildToolsVersions | Select-Object -Last 1
+	$latestMsBuildToolsVersion = $msBuildToolsVersions | Select-Object -First 1
 	return $latestMsBuildToolsVersion
 }
 
@@ -114,8 +114,6 @@ function Get-LatestInstalled64BitMSBuildPathFromRegistry {
 		throw "No 64-bit .NET Framework (C:\Windows\Microsoft.NET\Framework64) or 64-bit Visual Studio (C:\Program Files (x86)\MSBuild) installation of MSBuild found on the local system. OneBuild also assumes a 64-bit Windows OS install. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues"
 	}
 
-	#Write-Verbose "$errorContext $($allInstalled64BitMsBuildToolsVersions.Count)"
-	
 	$latestInstalledMsBuildToolsVersion = Get-LatestMsBuildToolsVersionFromRegistry -msBuildToolsVersions $allInstalled64BitMsBuildToolsVersions
 	$latestInstalledMsBuildToolsPath = Get-ItemProperty -Path $latestInstalledMsBuildToolsVersion.PSPath -Name "MSBuildToolsPath"
 	

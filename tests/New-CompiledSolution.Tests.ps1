@@ -57,12 +57,10 @@ Describe "New-CompiledSolution .NET Framework MSBuild" {
 																})
 															}
 
-		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v3.5\"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}		
-		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
-            $msbuildPath -eq $msBuildExecutablePath}		
-		
+		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v3.5\";PSChildName = "3.5"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}		
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
+		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {$msbuildPath -eq $msBuildExecutablePath}		
 		
 		try {
 			New-CompiledSolution -verbose
@@ -90,17 +88,17 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 		$msBuildToolsPath = "$windowsPath\Microsoft.NET\Framework64\v4.0.30319\"
 		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
 		
-		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="3.5";
-																Property=@("MSBuildToolsPath");
-																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5"
-																}),
-															  (@{PSChildName="4.0";
+		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="4.0";
 																Property=@("MSBuildToolsPath");
 																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0"
+																}),
+															(@{PSChildName="3.5";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5"
 																})
 															}
 		
-		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v4.0.30319\"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}	
+		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v4.0.30319\";PSChildName = "4.0"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}	
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln" }
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
@@ -121,16 +119,14 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 		}
 		
 	}	
-
-
-	#Context "When pre and post 2013 MSBuild installed"
-	
 }
-<#%	
+
+
+
 # Context "When .NET Framework Version 2.0 is installed
 # It strips it from availabe MSBuild versions
 
-
+<#%	
 Describe "New-CompiledSolution Visual Studio MSBuild" {
 
 	Context "When a single Visual Studio MSBuild version is installed" {
@@ -400,26 +396,41 @@ Describe "New-CompiledSolution terminating errors" {
 	}	
 
 }
+%#>
+
 Describe "New-CompiledSolution terminating errors" {	
 	
 	Context "When there is an error restoring NuGet packages for an invalid solution file" {	
 		Import-Module "$baseModulePath\$sut"
 	
-		New-Item -Name "Program Files (x86)" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
+		#New-Item -Name "Program Files (x86)" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "Program Files (x86)\MSBuild" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "Program Files (x86)\MSBuild\12.0\" -Path $TestDrive -ItemType Directory
+		#New-Item -Name "Program Files (x86)\MSBuild\12.0\bin" -Path $TestDrive -ItemType Directory	
+		#New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
+		#New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
+
+		$windowsPath = $env:windir
+					
+		$msBuildToolsPath = "$windowsPath\Microsoft.NET\Framework64\v3.5\"
+		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
+
 		New-Item -Name "empty_solution.sln" -Path $TestDrive -ItemType File
 		$testBasePath = $TestDrive
-	
-		Mock -ModuleName $sut Get-FirstSolutionFile { return "$TestDrive\empty_solution.sln"}
-		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution {}	
 		
-		$result = ""
+		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="3.5";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5"
+																})
+															}
+		
+		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v3.5\";PSChildName = "3.5"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}		
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "$TestDrive\empty_solution.sln"}
+		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { }
+		
+		$result = $null
 		try {
-			$result = New-CompiledSolution -path $testBasePath -programFilesx86Path "$testBasePath\Program Files (x86)" -verbose
+			$result = New-CompiledSolution -verbose
 		}
 		catch {
 			$result = "$_."
@@ -439,14 +450,15 @@ Describe "New-CompiledSolution terminating errors" {
 		
 	}	
 	
-	
-	
 }
+
+
 Describe "New-CompiledSolution configMode" {		
 	Context "When setting -configMode to Debug" {	
 		
 		Import-Module "$baseModulePath\$sut"
-	
+
+		Mock -ModuleName $sut Get-LatestInstalled64BitMSBuildPathFromRegistry { return "NotNull" }
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { return $null }	
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution -Verifiable -ParameterFilter { $configMode -eq "Debug" }	
@@ -455,7 +467,7 @@ Describe "New-CompiledSolution configMode" {
         }		
 		
 		try {
-			New-CompiledSolution -path $testBasePath -programFilesx86Path "$testBasePath\Program Files (x86)" -configMode "Debug" -verbose
+			New-CompiledSolution -configMode "Debug" -verbose
 		}
 		catch {
 			throw
@@ -469,7 +481,7 @@ Describe "New-CompiledSolution configMode" {
 		}			
 	}	
 }
-%#>
+
 
 $module = Get-Module $sut
 if ($module -ne $null)
