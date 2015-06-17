@@ -8,7 +8,7 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "New-NuGetPackages_1" {
+Describe "New-NuGetPackages_NoFiles" {
 
 	Context "When there are NO NuSpec file(s)" {
 		
@@ -17,10 +17,9 @@ Describe "New-NuGetPackages_1" {
 		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
             $Message -eq "No NuGet '.nuspec' file found matching the packaging naming convention, exiting without NuGet packaging."
         }
-		
-		$result = 0
+
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0"
+			New-NuGetPackages -versionNumber "1.0.0"
 		}
 		catch {
 			throw
@@ -36,21 +35,18 @@ Describe "New-NuGetPackages_1" {
 		It "Write a descriptive warning" {
 			Assert-VerifiableMocks
 		}
-
-        It "Exit module with code 0" {
-            $result | Should Be 0
-        }		
-	}	
+	}
+}
 	
+Describe "New-NuGetPackages_OneFile" {
 	Context "When there is one NuSpec file" {
 		
 		Import-Module "$baseModulePath\$sut"
-		Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
+        Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
 		Mock -ModuleName $sut Invoke-NuGetPack {return 0} -Verifiable
-		
-		$result = 0
+
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0"
+			New-NuGetPackages -versionNumber "1.0.0"
 		}
 		catch {
 			throw
@@ -65,20 +61,18 @@ Describe "New-NuGetPackages_1" {
 		It "Should call Invoke-NuGetPack once to generate NuGet package" {
             Assert-MockCalled Invoke-NuGetPack -ModuleName $sut -Times 1
         }
-        It "Exits module with code 0" {
-			$result | Should Be 0
-        }		
 	}
-	
+}
+
+Describe "New-NuGetPackages_Symbols" {	
 	Context "When includeSymbolsPackage switch parameter is passed" {
 		
 		Import-Module "$baseModulePath\$sut"
-		Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
+        Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec")} -Verifiable
 		Mock -ModuleName $sut Invoke-NuGetPackWithSymbols {return 0} -Verifiable
 		
-		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0" -includeSymbolsPackage
+			New-NuGetPackages -versionNumber "1.0.0" -includeSymbolsPackage
 		}
 		catch {
 			throw
@@ -90,11 +84,10 @@ Describe "New-NuGetPackages_1" {
 		It "Should call Invoke-NuGetPackWithSymbols to generate NuGet and Symbols package" {
             Assert-MockCalled Invoke-NuGetPackWithSymbols -ModuleName $sut -Times 1
         }
-        It "Exits module with code 0" {
-            $result | Should Be 0
-        }		
 	}
+}
 
+Describe "New-NuGetPackages_Errors" {	
 	Context "When there is an error generating a NuGet package" {
 		
 		Import-Module "$baseModulePath\$sut"
@@ -108,26 +101,23 @@ Describe "New-NuGetPackages_1" {
             $Object -like "Attempting to build package from 'test_error.nuspec'. Root element is missing."
         }		
 		
-		$result = 0
+		$result = ""
 		try {
 			$result = New-NuGetPackages -versionNumber "1.0.0" -path $testBasePath
 		}
 		catch {
-			throw
+			$result = $_
 		}
 		finally {
 			Remove-Module $sut
 		}
-
-		It "Should return a meaningful error message and write output to host" {
-			Assert-VerifiableMocks
-		}
 		
-        It "Exits module with code 1" {
-            $result | Should Be 1
+        It "Exits the module with a descriptive terminating error" {
+            $result | Should Match "An unexpected error occurred whilst executing Nuget Pack for the .nuspec file"
         }		
 	}		
 }
+
 Describe "New-NuGetPackages_2" {
 	Context "When there are 2 NuSpec files" {
 		
@@ -135,9 +125,8 @@ Describe "New-NuGetPackages_2" {
 		Mock -ModuleName $sut Get-AllNuSpecFiles {return @("one.nuspec", "two.nuspec")}
 		Mock -ModuleName $sut Invoke-NuGetPack {} 
 		
-		$result = 0
 		try {
-			$result = New-NuGetPackages -versionNumber "1.0.0"
+			New-NuGetPackages -versionNumber "1.0.0"
 		}
 		catch {
 			throw
@@ -150,18 +139,12 @@ Describe "New-NuGetPackages_2" {
             Assert-MockCalled Invoke-NuGetPack -ModuleName $sut -Times 2
         }
 
-        It "Exits module with code 0" {
-            $result | Should Be 0
-        }		
 	}	
 	
 }
-
 
 $module = Get-Module $sut
 if ($module -ne $null)
 {
 	Remove-Module $sut
 }
-
-

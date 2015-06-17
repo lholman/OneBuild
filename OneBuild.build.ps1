@@ -13,7 +13,13 @@ param(
 	$testName = "*"
 )
 
-$DebugPreference = "Continue"
+$DebugPreference = "SilentlyContinue"
+$WarningPreference = "Continue"
+
+if ($PSBoundParameters.ContainsKey('Verbose'))
+{
+	$VerbosePreference = "Continue"
+}
 
 if ((Test-Path -path "$BuildRoot\tools\powershell\modules" ) -eq $True)
 {
@@ -56,20 +62,27 @@ task Invoke-Commit Invoke-Compile, Invoke-UnitTests, New-Packages, {
 #=================================================================================================
 task New-Packages Set-VersionNumber, {
 
-	if ($assemblyInformationalVersion -ne "")
-	{
-		$versionLabels = $assemblyInformationalVersion.Split(".")
-		$nuGetPackageVersion = $versionLabels[0] + "." + $versionLabels[1] + "." + $versionLabels[2]
-	}
-	else
-	{
-		$nuGetPackageVersion = "$major.$minor.$buildCounter"
-	}
+	try {
+		if ($assemblyInformationalVersion -ne "")
+		{
+			$versionLabels = $assemblyInformationalVersion.Split(".")
+			$nuGetPackageVersion = $versionLabels[0] + "." + $versionLabels[1] + "." + $versionLabels[2]
+		}
+		else
+		{
+			$nuGetPackageVersion = "$major.$minor.$buildCounter"
+		}
 
-	Write-Output "Will use version: $nuGetPackageVersion to build NuGet package"
-	Import-Module "$baseModulePath\New-NuGetPackages.psm1"
-	New-NuGetPackages -versionNumber $nuGetPackageVersion
-	Remove-Module New-NuGetPackages
+		Write-Output "Will use version: $nuGetPackageVersion to build NuGet package"
+		Import-Module "$baseModulePath\New-NuGetPackages.psm1"
+		New-NuGetPackages -versionNumber $nuGetPackageVersion
+	}
+	catch {
+		throw
+	}
+	finally {
+		Remove-Module New-NuGetPackages
+	}	
 }
 
 #=================================================================================================
@@ -93,7 +106,7 @@ task Invoke-Compile Invoke-HardcoreClean, Set-VersionNumber, {
 		New-CompiledSolution -configMode $configuration
 	}
 	catch {
-		throw
+		throw $_
 	}
 	finally {
 		Remove-Module New-CompiledSolution
@@ -119,14 +132,14 @@ task Read-MajorMinorVersionNumber -If { ($major -eq $null) -and ($minor -eq $nul
 	{
 		#Retrieve the [major] and [minor] version numbers from the $($versionNumberFileName) file
 		[xml]$x = Get-Content "$BuildRoot\$($versionNumberFileName)"
-		Write-Warning "$($versionNumberFileName) file found, reading to set [major] and [minor] version numbers."
+		Write-Output "$($versionNumberFileName) file found, reading to set [major] and [minor] version numbers."
 		$script:major = $x.version.major
-		Write-Warning "Setting [major] version number to: $($script:major)."
+		Write-Output "Setting [major] version number to: $($script:major)."
 		$script:minor = $x.version.minor
-		Write-Warning "Setting [minor] version number to: $($script:minor)."
+		Write-Output "Setting [minor] version number to: $($script:minor)."
 
 	}else{
-		Write-Error "No $BuildRoot\$($versionNumberFileName) file found. Maybe you've forgotten to check it in?"
+		throw "No $BuildRoot\$($versionNumberFileName) file found. Maybe you've forgotten to check it in?"
 	}
 }
 

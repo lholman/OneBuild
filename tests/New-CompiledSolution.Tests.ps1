@@ -303,7 +303,7 @@ Describe "New-CompiledSolution check for solution file" {
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { }
-		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
+		Mock -ModuleName $sut Write-Verbose {} -Verifiable -ParameterFilter {
             $Message -eq "Using Configuration mode 'Release'. Modify this by passing in a value for the parameter '-configMode'"
         }
 		
@@ -325,7 +325,7 @@ Describe "New-CompiledSolution check for solution file" {
             Assert-MockCalled Invoke-MsBuildCompilationForSolution -ModuleName $sut -Times 1
         }	
 
-		It "Should write a descriptive warning about configuration mode" {
+		It "Should write a descriptive verbose message about configuration mode" {
 			Assert-VerifiableMocks 
 		}	
 	}
