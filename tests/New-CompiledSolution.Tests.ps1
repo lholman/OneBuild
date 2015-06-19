@@ -14,9 +14,10 @@ Describe "New-CompiledSolution No MSBuild" {
 	
 		Import-Module "$baseModulePath\$sut"
 		
-		$result = $null
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive { }
-		
+
+		$result = $null
 		try {
 			$result = New-CompiledSolution -verbose
 		}
@@ -50,7 +51,8 @@ Describe "New-CompiledSolution .NET Framework MSBuild" {
 					
 		$msBuildToolsPath = "$windowsPath\Microsoft.NET\Framework64\v3.5\"
 		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
-		
+
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}		
 		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="3.5";
 																Property=@("MSBuildToolsPath");
 																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5"
@@ -58,7 +60,6 @@ Describe "New-CompiledSolution .NET Framework MSBuild" {
 															}
 
 		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v3.5\";PSChildName = "3.5"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}		
-		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {$msbuildPath -eq $msBuildExecutablePath}		
 		
@@ -88,6 +89,7 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 		$msBuildToolsPath = "$windowsPath\Microsoft.NET\Framework64\v4.0.30319\"
 		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
 		
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="4.0";
 																Property=@("MSBuildToolsPath");
 																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0"
@@ -99,7 +101,6 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 															}
 		
 		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\windows\Microsoft.NET\Framework64\v4.0.30319\";PSChildName = "4.0"}} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}	
-		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln" }
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
             $msbuildPath -eq $msBuildExecutablePath}			
@@ -287,28 +288,22 @@ Describe "New-CompiledSolution" {
 	}
 }
 
+%#>
+
 Describe "New-CompiledSolution check for solution file" {
 
-		New-Item -Name "Program Files (x86)" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
-		$testBasePath = "$TestDrive"	
-		
 	Context "When there is a solution file" {
 	
 		Import-Module "$baseModulePath\$sut"
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
 		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { }
-		Mock -ModuleName $sut Write-Verbose {} -Verifiable -ParameterFilter {
+		Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
             $Message -eq "Using Configuration mode 'Release'. Modify this by passing in a value for the parameter '-configMode'"
         }
 		
 		try {
-			New-CompiledSolution -programFilesx86Path "$testBasePath\Program Files (x86)" -verbose
+			New-CompiledSolution -verbose
 		}
 		catch {
 			throw
@@ -337,7 +332,7 @@ Describe "New-CompiledSolution check for solution file" {
 		
 		$result = ""
 		try {
-			$result = New-CompiledSolution -programFilesx86Path "$testBasePath\Program Files (x86)" -verbose
+			$result = New-CompiledSolution -verbose
 		}
 		catch {
 			$result = "$_."
@@ -350,9 +345,11 @@ Describe "New-CompiledSolution check for solution file" {
 			$result | Should Match "No solution file found to compile, use the -path parameter if the target solution file isn't in the solution root"
 		}			
 	}
+	
+	
+
 }
 
-%#>
 Describe "New-CompiledSolution terminating errors" {	
 
 	Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {

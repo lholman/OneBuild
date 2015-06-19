@@ -47,10 +47,6 @@ function New-CompiledSolution{
 				{
 					$basePath = Confirm-Path -path $path
 				
-					$script:msbuildPath = Get-LatestInstalled64BitMSBuildPathFromRegistry
- 					
-					$nuGetPath = Set-NuGetPath $nuGetPath
-
 					$solutionFile = Get-FirstSolutionFile
 					
 					if ($solutionFile -eq $null)
@@ -58,14 +54,17 @@ function New-CompiledSolution{
 						throw "No solution file found to compile, use the -path parameter if the target solution file isn't in the solution root"
 					}
 
-					Write-Warning "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
-										
+					$script:msbuildPath = Get-LatestInstalled64BitMSBuildPathFromRegistry
+ 					
+					$nuGetPath = Set-NuGetPath $nuGetPath
 					$nugetError = Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
 					
 					if ($nugetError -ne $null) 
 					{
 						throw "Whilst executing NuGet to restore dependencies for solution file $solutionFile, NuGet.exe exited with error message: $nugetError"
 					}
+					
+					Write-Warning "Using Configuration mode '$($configMode)'. Modify this by passing in a value for the parameter '-configMode'"
 					
 					$result = Invoke-MsBuildCompilationForSolution -solutionFile $solutionFile -configMode $configMode -msbuildPath $script:msbuildPath
 					if ($result -ne $null) 
@@ -231,7 +230,7 @@ function Restore-SolutionNuGetPackages {
 		[Parameter(Mandatory = $True )]
 			[string]$nuGetPath				
 	)	
-	Write-Warning "Restoring NuGet packages for ""$solutionFile""."
+	Write-Verbose "Restoring NuGet packages for ""$solutionFile""."
 	$output = & $nugetPath restore $solutionFile 2>&1 
 	$err = $output | ? {$_.gettype().Name -eq "ErrorRecord"}
 
