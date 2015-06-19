@@ -124,14 +124,10 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 		}
 		
 	}	
+
 }
 
-# Context "When .NET Framework Version 2.0 is installed
-# It strips it from availabe MSBuild versions
-# Context "When multiple MSBuild versions are in a funky order
-# It correctly identifies the latest MSBuild version 
 
-	
 Describe "New-CompiledSolution Visual Studio MSBuild" {
 
 	Context "When a single Visual Studio MSBuild version is installed" {
@@ -172,6 +168,7 @@ Describe "New-CompiledSolution Visual Studio MSBuild" {
 			Assert-VerifiableMocks
 		}	
 	}
+
 }
 
 Describe "New-CompiledSolution Select Visual Studio MSBuild version" {
@@ -276,6 +273,7 @@ Describe "New-CompiledSolution" {
 			Assert-VerifiableMocks
 		}		
 	}
+
 }
 
 
@@ -334,8 +332,6 @@ Describe "New-CompiledSolution check for solution file" {
 			$result | Should Match "No solution file found to compile, use the -path parameter if the target solution file isn't in the solution root"
 		}			
 	}
-	
-	
 
 }
 
@@ -429,7 +425,8 @@ Describe "New-CompiledSolution terminating errors" {
 	
 }
 
-Describe "New-CompiledSolution configMode" {		
+Describe "New-CompiledSolution configMode" {	
+	
 	Context "When setting -configMode to Debug" {	
 		
 		Import-Module "$baseModulePath\$sut"
@@ -456,6 +453,7 @@ Describe "New-CompiledSolution configMode" {
 			Assert-VerifiableMocks 
 		}			
 	}	
+
 }
 
 
