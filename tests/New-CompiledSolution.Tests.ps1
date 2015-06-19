@@ -228,34 +228,42 @@ Describe "New-CompiledSolution" {
 	Context "When there are .NET Framework and Visual Studio MSBuild versions installed" {
 	
 		Import-Module "$baseModulePath\$sut"
-		New-Item -Name "Windows" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Windows\Microsoft.NET" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Windows\Microsoft.NET\Framework64" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Windows\Microsoft.NET\Framework64\v2.0.50727\msbuild.exe" -Path $TestDrive -ItemType File 
-		New-Item -Name "Windows\Microsoft.NET\Framework64\v4.0.30319" -Path $TestDrive -ItemType Directory			
-		New-Item -Name "Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe" -Path $TestDrive -ItemType File 
-
-		New-Item -Name "Program Files (x86)" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
-		New-Item -Name "Program Files (x86)\MSBuild\13.0\" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\13.0\bin" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Program Files (x86)\MSBuild\13.0\bin\amd64" -Path $TestDrive -ItemType Directory			
-		New-Item -Name "Program Files (x86)\MSBuild\13.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File
-		New-Item -Name "Program Files (x86)\MSBuild\Microsoft\" -Path $TestDrive -ItemType Directory 	
-		$testBasePath = "$TestDrive"	
 		
-		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
-            $msbuildPath -eq "$TestDrive\Program Files (x86)\MSBuild\13.0\bin\amd64\msbuild.exe"}		
-		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}
+		$programFilesx86Path = ${env:ProgramFiles(x86)}
+		$msBuildToolsPath = Join-Path -path $programFilesx86Path -childpath "\MSBuild\13.0\bin\amd64\"
+		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
+		
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}		
+		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="13.0";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\13.0"
+																}),
+															(@{PSChildName="12.0";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0"
+																}),
+															(@{PSChildName="4.0";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\4.0"
+																}),
+															(@{PSChildName="3.5";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\3.5"
+																})
+															}
+															
+		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\Program Files (x86)\MSBuild\13.0\bin\amd64\";
+													PSChildName = "13.0"}
+												} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}	
+		
+		Mock -ModuleName $sut Confirm-Path { return "C:\Program Files (x86)\MSBuild\13.0\bin\amd64\msbuild.exe" } -Verifiable -ParameterFilter {
+            $path -eq $msBuildExecutablePath}	
 		Mock -ModuleName $sut Restore-SolutionNuGetPackages { }
+		Mock -ModuleName $sut Invoke-MsBuildCompilationForSolution { } -Verifiable -ParameterFilter {
+            $msbuildPath -eq $msBuildExecutablePath}	
 			
 		try {
-			New-CompiledSolution -programFilesx86Path "$testBasePath\Program Files (x86)" -windowsPath "$TestDrive\Windows" -verbose
+			New-CompiledSolution -verbose
 		}
 		catch {
 			throw $_
