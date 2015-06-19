@@ -7,8 +7,6 @@ function New-CompiledSolution{
 	Executes MSBuild.exe to Clean and Rebuild a Visual Studio solution file to generate compiled .NET assemblies. MsBuild version and Solution file to build are identified by convention, also allows optional passing of a target configuration (Debug|Release etc).
 .NOTES
 	Requirements: Copy this module to any location found in $env:PSModulePath
-.PARAMETER windowsPath
-	Optional. The full path to Windows on the host OS.  Defaults to 'C:\Windows'.	
 .PARAMETER configMode
 	Optional. The build Configuration to be passed to msbuild during compilation. Examples include 'Debug' or 'Release'.  Defaults to 'Release' 'C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe'.	
 .PARAMETER nuGetPath

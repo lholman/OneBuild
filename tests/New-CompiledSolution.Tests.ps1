@@ -352,7 +352,7 @@ Describe "New-CompiledSolution check for solution file" {
 	}
 }
 
-
+%#>
 Describe "New-CompiledSolution terminating errors" {	
 
 	Mock -ModuleName $sut Write-Warning {} -Verifiable -ParameterFilter {
@@ -367,12 +367,6 @@ Describe "New-CompiledSolution terminating errors" {
 		
 		Import-Module "$baseModulePath\$sut"
 
-		New-Item -Name "Program Files (x86)" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\" -Path $TestDrive -ItemType Directory
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin" -Path $TestDrive -ItemType Directory	
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
-		New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
 		New-Item -Name "test_error.sln" -Path $TestDrive -ItemType File
 		$testBasePath = "$TestDrive"	
 		
@@ -396,20 +390,13 @@ Describe "New-CompiledSolution terminating errors" {
 	}	
 
 }
-%#>
+
 
 Describe "New-CompiledSolution terminating errors" {	
 	
 	Context "When there is an error restoring NuGet packages for an invalid solution file" {	
 		Import-Module "$baseModulePath\$sut"
 	
-		#New-Item -Name "Program Files (x86)" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "Program Files (x86)\MSBuild" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "Program Files (x86)\MSBuild\12.0\" -Path $TestDrive -ItemType Directory
-		#New-Item -Name "Program Files (x86)\MSBuild\12.0\bin" -Path $TestDrive -ItemType Directory	
-		#New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64" -Path $TestDrive -ItemType Directory			
-		#New-Item -Name "Program Files (x86)\MSBuild\12.0\bin\amd64\msbuild.exe" -Path $TestDrive -ItemType File 
-
 		$windowsPath = $env:windir
 					
 		$msBuildToolsPath = "$windowsPath\Microsoft.NET\Framework64\v3.5\"
