@@ -128,6 +128,8 @@ Describe "New-CompiledSolution Select .NET Framework MSBuild version" {
 
 # Context "When .NET Framework Version 2.0 is installed
 # It strips it from availabe MSBuild versions
+# Context "When multiple MSBuild versions are in a funky order
+# It correctly identifies the latest MSBuild version 
 
 	
 Describe "New-CompiledSolution Visual Studio MSBuild" {
@@ -220,7 +222,7 @@ Describe "New-CompiledSolution Select Visual Studio MSBuild version" {
 	
 }
 
-<#%
+
 Describe "New-CompiledSolution" {
 
 	Context "When there are .NET Framework and Visual Studio MSBuild versions installed" {
@@ -268,7 +270,6 @@ Describe "New-CompiledSolution" {
 	}
 }
 
-%#>
 
 Describe "New-CompiledSolution check for solution file" {
 
