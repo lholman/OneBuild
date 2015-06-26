@@ -14,6 +14,8 @@
     <releaseNotes>
 		(bug) #12 - 'New-CompiledSolution module doesn't identify the latest installed version of MSBuild'
 		(bug) #42 - Support VB projects
+		(enhancement) #39 - 'Deprecate Build.bat'
+		
 	</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <dependencies>
