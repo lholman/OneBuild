@@ -37,6 +37,43 @@ Describe "New-CompiledSolution No MSBuild" {
 
 }
 
+Describe "New-CompiledSolution .NET Framework MSBuild" {
+		
+	Context "When only .NET Framework 2.0 MSBuild is installed" {
+	
+		Import-Module "$baseModulePath\$sut"
+		$windowsPath = $env:windir
+					
+		$msBuildToolsPath = "$windowsPath\Microsoft.NET\Framework64\v2.0.50727\"
+		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
+
+		Mock -ModuleName $sut Get-FirstSolutionFile { return "solution.sln"}		
+		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="2.0";
+																Property=@("MSBuildToolsPath");
+																PSPath="Microsoft.PowerShell.Core\Registry::HKLM\SOFTWARE\Microsoft\MSBuild\ToolsVersions\2.0"
+																})
+															}
+
+		Mock -ModuleName $sut Get-ItemProperty {@{MSBuildToolsPath = "C:\Windows\Microsoft.NET\Framework64\v2.0.50727\";
+													PSChildName = "2.0"}
+												} -Verifiable -ParameterFilter {$Name -eq "MSBuildToolsPath"}		
+		$result = $null
+		try {
+			$result = New-CompiledSolution -verbose
+		}
+		catch {
+			$result = $_
+		}
+		finally {
+			Remove-Module $sut
+		}
+		It "Exits the module with a descriptive terminating error" {
+			$expectedErrorMessage = "No 64-bit .NET Framework \(C:\\Windows\\Microsoft.NET\\Framework64\) or 64-bit Visual Studio \(C:\\Program Files \(x86\)\\MSBuild\) installation of MSBuild found on the local system. OneBuild also assumes a 64-bit Windows OS install. Refer to http://lholman.github.io/OneBuild/conventions.html for more detail. If you require 32-bit Windows OS support please raise an issue at https://github.com/lholman/OneBuild/issues" 	
+			$result | Should Match $expectedErrorMessage
+		}		
+	}
+
+}
 
 Describe "New-CompiledSolution .NET Framework MSBuild" {
 		
