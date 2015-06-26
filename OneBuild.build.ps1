@@ -9,7 +9,8 @@
 [CmdletBinding()]
 param(
 	$configuration = "Debug",
-	$buildCounter = "999"
+	$buildCounter = "999",
+	$testName = "*"
 )
 
 $DebugPreference = "SilentlyContinue"
@@ -30,7 +31,12 @@ if ((Test-Path -path "$BuildRoot\tools\powershell\modules" ) -eq $True)
 }
 
 function Enter-Build {
-	Write-Output "Base module path: $baseModulePath"
+
+	#Checks Windows Operating System bitness for compatibility with OneBuild.
+	Import-Module "$baseModulePath\Confirm-WindowsBitness.psm1"
+	Confirm-WindowsBitness -verbose
+	Remove-Module Confirm-WindowsBitness
+
 }
 
 $assemblyInformationalVersion = ""
@@ -170,8 +176,9 @@ task Invoke-HardcoreClean {
 
 #=================================================================================================
 # Synopsis: Runs the Pester (https://github.com/pester/Pester) based unit tests for OneBuild
+# Pre-condition: Will only run dependent tasks if we're not building in Debug mode (locally).
 #=================================================================================================
-task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
+task Invoke-OneBuildUnitTests {
 	
 	$pesterPath = Get-ChildItem "$BuildRoot\packages" | Where-Object {$_.Name -like 'pester*'} | Where-Object {$_.PSIsContainer -eq $True} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}
 	
@@ -180,7 +187,7 @@ task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
 	Import-Module "$pesterPath\tools\Pester.psm1"
 	$result
 	try {
-		$result = Invoke-Pester -Path "$BuildRoot\tests" -PassThru -OutputXml $BuildRoot\TestResult.xml
+		$result = Invoke-Pester -Path "$BuildRoot\tests\" -TestName $testName -PassThru -OutputXml $BuildRoot\TestResult.xml
 		assert ($result.FailedCount -eq 0) "$($result.FailedCount) OneBuild unit test(s) failed."
 	}
 	catch {
@@ -190,3 +197,8 @@ task Invoke-OneBuildUnitTests Invoke-HardcoreClean, New-Packages, {
 		Remove-Module Pester
 	}
 }
+
+task BeforeInvoke-OneBuildUnitTests -Before Invoke-OneBuildUnitTests -If {($configuration -ne "Debug")} Invoke-HardcoreClean, New-Packages, {
+
+}
+
