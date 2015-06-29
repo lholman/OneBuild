@@ -13,9 +13,10 @@
     <summary>A modular set of convention based .NET solution build scripts written in PowerShell.</summary>
     <releaseNotes>
 		(bug) #12 - 'New-CompiledSolution module doesn't identify the latest installed version of MSBuild'
-		(bug) #42 - Support VB projects
 		(enhancement) #39 - 'Deprecate Build.bat'
-		
+		(bug) #42 - Support VB projects
+		(documentation) #44 - Readme doesn't explain the intended way to run OneBuild's unit tests
+		(bug) #48 - Terminate if the Windows OS version and Architecture are not 64 bit
 	</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <dependencies>
