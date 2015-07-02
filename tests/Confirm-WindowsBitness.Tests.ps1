@@ -1,5 +1,12 @@
 ﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".").Replace(".ps1","")
+$baseModulePath = "$here\..\tools\powershell\modules"
+
+$module = Get-Module $sut
+if ($module -ne $null)
+{
+	Remove-Module $sut
+}
 
 Describe "Confirm-WindowsBitness Check bitness" {
 
