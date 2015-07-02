@@ -132,7 +132,7 @@ Describe "CommonFunctions.Get-NuGetPath" {
 
 Describe "CommonFunctions.Get-NUnitPath" {
 	
-	Context "When there is more than one version of NuGet.Commandline installed" {
+	Context "When there is more than one version of NUnit.Runners installed" {
 
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "packages" -Path $TestDrive -ItemType Directory
