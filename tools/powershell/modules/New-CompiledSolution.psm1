@@ -181,7 +181,8 @@ function Set-NuGetPath {
 		)	
 	Import-Module "$PSScriptRoot\CommonFunctions.psm1"
 	Try {
-		$path = Get-NuGetPath -path $path
+		#$path = Get-NuGetPath -path $path
+		$path = Get-FilePath -path "$path\packages" -fileName "nuget.exe" -pathContains "nuget.commandline"
 		return $path
 	}
 	Catch [Exception] {
