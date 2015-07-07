@@ -28,9 +28,6 @@ function New-CompiledSolution{
 			[Parameter(Mandatory = $False )]
 				[string]
 				$configMode = "Release",	
-			[Parameter(Mandatory = $False )]	
-				[string]
-				$nuGetPath,
 			[Parameter(Mandatory = $False)]
 				[string]
 				$path					
@@ -56,7 +53,7 @@ function New-CompiledSolution{
 
 					$script:msbuildPath = Get-LatestInstalled64BitMSBuildPathFromRegistry
  					
-					$nuGetPath = Set-NuGetPath $nuGetPath
+					$nuGetPath = Set-NuGetPath -path $basePath
 					$nugetError = Restore-SolutionNuGetPackages -solutionFile $solutionFile -nuGetPath $nuGetPath
 					
 					if ($nugetError -ne $null) 
@@ -181,7 +178,6 @@ function Set-NuGetPath {
 		)	
 	Import-Module "$PSScriptRoot\CommonFunctions.psm1"
 	Try {
-		#$path = Get-NuGetPath -path $path
 		$path = Get-FilePath -path "$path\packages" -fileName "nuget.exe" -pathContains "nuget.commandline"
 		return $path
 	}

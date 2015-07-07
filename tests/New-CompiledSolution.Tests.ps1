@@ -389,7 +389,8 @@ Describe "New-CompiledSolution terminating errors" {
 		New-Item -Name "test_error.sln" -Path $TestDrive -ItemType File
 		$testBasePath = "$TestDrive"	
 		
-		Mock -ModuleName $sut Restore-SolutionNuGetPackages { return $null }		
+		Mock -ModuleName $sut Restore-SolutionNuGetPackages { return $null }
+		Mock -ModuleName $sut Set-NuGetPath { return "Return_value_does_not_matter_for_this_test" }		
 		
 		$result = ""
 		try {
@@ -422,7 +423,6 @@ Describe "New-CompiledSolution terminating errors" {
 		$msBuildExecutablePath = Join-Path -path $msBuildToolsPath -childpath "msbuild.exe"
 
 		New-Item -Name "empty_solution.sln" -Path $TestDrive -ItemType File
-		$testBasePath = $TestDrive
 
 		Mock -ModuleName $sut Get-FirstSolutionFile { return "$TestDrive\empty_solution.sln"}		
 		Mock -ModuleName $sut Get-64BitMsBuildRegistryHive {@(@{PSChildName="3.5";
