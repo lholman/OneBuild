@@ -40,10 +40,9 @@ function Invoke-NUnitTestsForAllProjects{
 		}	
 	Process {
 				$basePath = Confirm-Path -path $path
-				if ($basePath -eq 1) { return 1}
 				
 				Import-Module "$PSScriptRoot\CommonFunctions.psm1"
-				$nUnitPath = Get-NUnitPath
+				$nUnitPath = Get-FilePath -path "$basePath\packages" -fileName "nunit-console.exe" -pathContains "nunit.runners" -verbose
 				
 				#Our convention: If it's within any bin folder underneath the current folder, has 'nunit' in the filename (and in the directory name) and is a '.dll' then we'll try and run it with NUnit.
 				$allTestAssemblyPaths = Get-ChildItem $basePath -Recurse | Where-Object {$_.Extension -eq '.dll'} | Where-Object {$_.Name -like "*$searchString*"} | Where-Object {$_.FullName -notlike "*\obj\*"} | Where-Object {$_.FullName -notlike "*\packages\*"} | Where-Object {$_.Name -notlike "*$searchString.framework*"} | foreach {$_.FullName}
@@ -51,7 +50,7 @@ function Invoke-NUnitTestsForAllProjects{
 				if ($allTestAssemblyPaths -eq $null)
 				{
 					Write-Warning "No assemblies found matching the test naming convention ($searchString), exiting without executing tests."
-					Return 0
+					Return
 				}
 				
 				$testAssemblyPaths = @()

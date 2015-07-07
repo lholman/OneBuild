@@ -19,9 +19,8 @@ Describe "Invoke-NUnitTestsForAllProjects" {
             $Message -eq "No assemblies found matching the test naming convention ($searchString), exiting without executing tests."
         }
 		
-		$result = 0
 		try {
-			$result = Invoke-NUnitTestsForAllProjects -searchString $searchString
+			Invoke-NUnitTestsForAllProjects -searchString $searchString
 		}
 		catch {
 			throw
@@ -34,35 +33,8 @@ Describe "Invoke-NUnitTestsForAllProjects" {
 			Assert-VerifiableMocks
 		}
 
-        It "Exits module with code 0" {
-            $result | Should Be 0
-        }		
 	}
-#}
-#Describe "Invoke-NUnitTestsForAllProjects" {
-	Context "When module is invoked with a path that does NOT exist" {
 
-		Import-Module "$baseModulePath\$sut"	
-		Mock -ModuleName $sut Confirm-Path { return 1 }
-		$testBasePath = "$TestDrive\NonExistentPath\"
-	
-		$result = ""
-		try {
-			$result = Invoke-NUnitTestsForAllProjects -path $testBasePath
-		}
-		catch {
-			throw
-		}
-		finally {
-			Remove-Module $sut
-		}
-
-        It "Should exit the module with code 1" {
-            $result | Should Be 1
-        }		
-	}	
-	
-		
 }
 
 $module = Get-Module $sut
