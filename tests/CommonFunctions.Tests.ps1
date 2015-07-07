@@ -8,17 +8,17 @@ if ($module -ne $null)
 	Remove-Module $sut
 }
 
-Describe "CommonFunctions.Get-NuGetPath execution" {
+Describe "CommonFunctions.Get-FilePath execution" {
 
 		
-	Context "When Get-NuGetPath module is invoked with NO path parameter" {
+	Context "When Get-FilePath module is invoked with NO path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""
 		try {
-			$result = Get-NuGetPath
+			$result = Get-FilePath -fileName "nuget.exe"
 		}
 		catch {
 			throw
@@ -32,14 +32,14 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
         }		
 	}
 
-	Context "When Get-NuGetPath module is invoked with an empty path parameter" {
+	Context "When Get-FilePath module is invoked with an empty path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""
 		try {
-			$result = Get-NuGetPath -path ""
+			$result = Get-FilePath -path "" -fileName "nuget.exe"
 		}
 		catch {
 			throw
@@ -53,14 +53,14 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
         }			
 	}
 
-	Context "When Get-NuGetPath module is invoked with a null path parameter" {
+	Context "When Get-FilePath module is invoked with a null path parameter" {
 		
 		Import-Module "$baseModulePath\$sut"
 
 		$testBasePath = Join-Path "$here" "\.." -Resolve
 		$result = ""
 		try {
-			$result = Get-NuGetPath -path $null
+			$result = Get-FilePath -path $null -fileName "nuget.exe"
 		}
 		catch {
 			throw
@@ -74,7 +74,7 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
         }		
 	}
 
-	Context "When Get-NuGetPath module is invoked with a path (-path parameter) that does NOT exist" {
+	Context "When Get-FilePath module is invoked with a path (-path parameter) that does NOT exist" {
 
 		Import-Module "$baseModulePath\$sut"	
 		$testBasePath = "$TestDrive\NonExistentPath\"
@@ -82,7 +82,7 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
 		$error.Clear()		
 		$result = ""
 		try {
-			Get-NuGetPath -path $testBasePath 
+			Get-FilePath -path $testBasePath -fileName "nuget.exe"
 		}
 		catch {
 			$result = $_
@@ -92,13 +92,13 @@ Describe "CommonFunctions.Get-NuGetPath execution" {
 		}
 
 		It "Exits the module with a terminating error" {
-			$result | Should Be "Supplied path: $testBasePath does not exist" 
+			$result | Should Be "CommonFunctions:Get-FilePath: Supplied path: '$($testBasePath)' does not exist" 
         }		
 	}	
 
 }
 
-Describe "CommonFunctions.Get-NuGetPath" {
+Describe "CommonFunctions.Get-FilePath" {
 	
 	Context "When there is more than one version of NuGet.Commandline installed" {
 
@@ -110,12 +110,12 @@ Describe "CommonFunctions.Get-NuGetPath" {
 		New-Item -Name "NuGet.CommandLine.2.7.3" -Path "$TestDrive\packages" -ItemType Directory		
 		New-Item -Name "tools" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.3" -ItemType Directory		
 		New-Item -Name "nuget.exe" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.3\tools" -ItemType File			
-		$correctNugetPath = "$($TestDrive)\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
+		$correctPath = "$($TestDrive)\packages\NuGet.CommandLine.2.7.3\tools\nuget.exe"
 		$testBasePath = "$($TestDrive)"
 
 		$result = ""
 		try {
-			$result = Get-NuGetPath -path $testBasePath
+			$result = Get-FilePath -path "$testBasePath\packages" -fileName "nuget.exe"
 		}
 		catch {
 			throw
@@ -125,29 +125,30 @@ Describe "CommonFunctions.Get-NuGetPath" {
 		}
 		
 		It "Should return the full path to to the highest version of NuGet.Commandline found in the solution packages folder" {
-            $result | Should Be $correctNugetPath
+            $result | Should Be $correctPath
         }			
 	}	
 }
 
-Describe "CommonFunctions.Get-NUnitPath" {
+
+Describe "CommonFunctions.Get-FilePath" {
 	
-	Context "When there is more than one version of NUnit.Runners installed" {
+	Context "When pathContains parameter is used" {
 
 		Import-Module "$baseModulePath\$sut"
 		New-Item -Name "packages" -Path $TestDrive -ItemType Directory
-		New-Item -Name "NUnit.Runners.2.6.2" -Path "$TestDrive\packages" -ItemType Directory
-		New-Item -Name "tools" -Path "$TestDrive\packages\NUnit.Runners.2.6.2" -ItemType Directory		
-		New-Item -Name "nunit-console.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.2\tools" -ItemType File	
-		New-Item -Name "NUnit.Runners.2.6.3" -Path "$TestDrive\packages" -ItemType Directory		
-		New-Item -Name "tools" -Path "$TestDrive\packages\NUnit.Runners.2.6.3" -ItemType Directory		
-		New-Item -Name "nunit-console.exe" -Path "$TestDrive\packages\NUnit.Runners.2.6.3\tools" -ItemType File			
-		$correctNUnitPath = "$($TestDrive)\packages\NUnit.Runners.2.6.3\tools\nunit-console.exe"
+		New-Item -Name "NuGet.CommandLine.2.7.2" -Path "$TestDrive\packages" -ItemType Directory
+		New-Item -Name "tools" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.2" -ItemType Directory		
+		New-Item -Name "nuget.exe" -Path "$TestDrive\packages\NuGet.CommandLine.2.7.2\tools" -ItemType File	
+		New-Item -Name "AnotherPath.2.7.3" -Path "$TestDrive\packages" -ItemType Directory		
+		New-Item -Name "tools" -Path "$TestDrive\packages\AnotherPath.2.7.3" -ItemType Directory		
+		New-Item -Name "nuget.exe" -Path "$TestDrive\packages\AnotherPath.2.7.3\tools" -ItemType File			
+		$correctPath = "$($TestDrive)\packages\AnotherPath.2.7.3\tools\nuget.exe"
 		$testBasePath = "$($TestDrive)"
 
 		$result = ""
 		try {
-			$result = Get-NUnitPath -path $testBasePath
+			$result = Get-FilePath -path "$testBasePath\packages" -fileName "nuget.exe" -pathContains "AnotherPath" -verbose
 		}
 		catch {
 			throw
@@ -156,8 +157,8 @@ Describe "CommonFunctions.Get-NUnitPath" {
 			Remove-Module $sut
 		}
 		
-		It "Should return the full path to to the highest version of NUnit.Runners found in the solution packages folder" {
-            $result | Should Be $correctNUnitPath
+		It "Should return the full path containing the value provided for the pathContains parameter" {
+            $result | Should Be $correctPath
         }			
 	}	
 }
