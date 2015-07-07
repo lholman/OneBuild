@@ -187,7 +187,6 @@ function Set-NuGetPath {
 	Finally {
 		Remove-Module CommonFunctions
 	}
-	
 }
 
 function Get-FirstSolutionFile {

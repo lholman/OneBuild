@@ -42,10 +42,8 @@ function New-NuGetPackages{
 	Process {
 
 				$basePath = Confirm-Path -path $path
-				if ($basePath -eq 1) { return 1}
 				
-				Import-Module "$PSScriptRoot\CommonFunctions.psm1"
-				$nuGetPath = Get-NuGetPath
+				$nuGetPath = Set-NuGetPath -path $basePath
 
 				$specFilePaths = Get-AllNuSpecFiles -path $basePath
 				
@@ -99,6 +97,25 @@ function Confirm-Path {
 	$basePath = Get-Path -path $path
 	Remove-Module Get-Path
 	return $basePath
+}
+
+function Set-NuGetPath {
+	Param(			
+		[Parameter(
+			Mandatory = $False )]
+			[string]$path			
+		)	
+	Import-Module "$PSScriptRoot\CommonFunctions.psm1"
+	Try {
+		$path = Get-FilePath -path "$path\packages" -fileName "nuget.exe" -pathContains "nuget.commandline"
+		return $path
+	}
+	Catch [Exception] {
+		throw
+	}
+	Finally {
+		Remove-Module CommonFunctions
+	}
 }
 
 function Get-AllNuSpecFiles {

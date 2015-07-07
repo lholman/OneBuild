@@ -99,7 +99,8 @@ Describe "New-NuGetPackages_Errors" {
         }
 		Mock -ModuleName $sut Write-Host {} -Verifiable -ParameterFilter {
             $Object -like "Attempting to build package from 'test_error.nuspec'. Root element is missing."
-        }		
+        }	
+		Mock -ModuleName $sut Set-NuGetPath { return "Return_value_does_not_matter_for_this_test" }		
 		
 		$result = ""
 		try {
