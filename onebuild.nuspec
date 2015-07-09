@@ -21,13 +21,13 @@
     <copyright>Copyright 2014</copyright>
     <dependencies>
       <dependency id="NuGet.CommandLine" version="2.7.3" />
-      <dependency id="NUnit.Runners" version="2.6.3" />
-	  <dependency id="Invoke-Build" version="2.9.12" />  
+      <dependency id="NUnit.Runners" version="2.6.3" /> 
     </dependencies>
   </metadata>
   <files>
     <file src="tools\**\*.*" target="\tools\" />
 	<file src="OneBuild.build.ps1" target="\tools\temp\" />
+	<file src="Invoke-Build.ps1" target="\tools\temp\" />	
 	<file src="OneBuild.bat" target="\tools\temp\" />		
 	<file src="LICENSE" target="\tools\LICENSE" />
 	<file src="README.MD" target="\tools\README.MD" />

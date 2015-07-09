@@ -41,11 +41,11 @@ ECHO verbose = %VERBOSE%
 
 IF [%VERBOSE%] == [$true] GOTO VERBOSEBUILD
 
-powershell -NoProfile -ExecutionPolicy bypass -command "$invokeBuildPath = Get-ChildItem packages | Where-Object {$_.Name -like 'Invoke-Build*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}; Write-Host """Found Invoke-Build at: $invokeBuildPath"""; & {& $invokeBuildPath\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% -testName %TESTNAME% .\OneBuild.build.ps1}" 
+powershell -NoProfile -ExecutionPolicy bypass -command "& {& .\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% -testName %TESTNAME% .\OneBuild.build.ps1}" 
 GOTO ENDBUILD
 
 :VERBOSEBUILD
-powershell -NoProfile -ExecutionPolicy bypass -command "$invokeBuildPath = Get-ChildItem packages | Where-Object {$_.Name -like 'Invoke-Build*'} | Sort-Object $_.FullName -Descending | Select-Object FullName -First 1 | foreach {$_.FullName}; Write-Host """Found Invoke-Build at: $invokeBuildPath"""; & {& $invokeBuildPath\tools\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% -testName %TESTNAME% .\OneBuild.build.ps1 -verbose}" 
+powershell -NoProfile -ExecutionPolicy bypass -command "& {& .\Invoke-Build.ps1 %TASK% -configuration %CONFIGURATION% -buildCounter %BUILDCOUNTER% -testName %TESTNAME% .\OneBuild.build.ps1 -verbose}" 
 
 :ENDBUILD
 
