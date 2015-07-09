@@ -1,7 +1,7 @@
 
 <#
 Invoke-Build - Build Automation in PowerShell
-Copyright (c) 2011-2014 Roman Kuzmin
+Copyright (c) 2011-2015 Roman Kuzmin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,15 +39,15 @@ function Get-BuildFile($Path) {
 	} while($Path = Split-Path $Path)
 }
 
-if ($MyInvocation.InvocationName -eq '.') {return}
-
 function *FP($_) {
 	$PSCmdlet.GetUnresolvedProviderPathFromPSPath($_)
 }
 
-function *TE($M, $C = 0) {
+function *TE($M, $C=0) {
 	$PSCmdlet.ThrowTerminatingError((New-Object System.Management.Automation.ErrorRecord ([Exception]"$M"), $null, $C, $null))
 }
+
+if ($MyInvocation.InvocationName -eq '.') {return}
 
 $BuildTask = $PSBoundParameters['Task']
 $BuildFile = $PSBoundParameters['File']
@@ -56,9 +56,9 @@ ${private:*Checkpoint} = $PSBoundParameters['Checkpoint']
 ${private:*Resume} = $PSBoundParameters['Resume']
 ${private:*cd} = *FP
 ${private:*cp} = $null
-${private:*names} =
-'Task', 'File', 'Parameters', 'Checkpoint', 'Result', 'Safe', 'Summary', 'Resume', 'WhatIf',
-'Verbose', 'Debug', 'ErrorAction', 'WarningAction', 'ErrorVariable', 'WarningVariable', 'OutVariable', 'OutBuffer', 'PipelineVariable'
+${private:*pn} = 'Task', 'File', 'Parameters', 'Checkpoint', 'Result', 'Safe', 'Summary', 'Resume', 'WhatIf',
+'Verbose', 'Debug', 'ErrorAction', 'WarningAction', 'ErrorVariable', 'WarningVariable', 'OutVariable', 'OutBuffer',
+'PipelineVariable', 'InformationAction', 'InformationVariable'
 
 try {
 	if ($BuildTask -eq '**') {
@@ -93,12 +93,11 @@ if (${*Parameters}) {return}
 $_ = Get-Command -Name $BuildFile -CommandType ExternalScript -ErrorAction 1
 if (!($_ = $_.Parameters) -or !$_.Count) {return}
 
-${private:*r} = New-Object Management.Automation.RuntimeDefinedParameterDictionary
-${private:*a} = New-Object Collections.ObjectModel.Collection[Attribute]
-${*a}.Add((New-Object Management.Automation.ParameterAttribute))
+${private:*r} = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+(${private:*a} = New-Object System.Collections.ObjectModel.Collection[Attribute]).Add((New-Object System.Management.Automation.ParameterAttribute))
 foreach($_ in $_.Values) {
-	if (${*names} -notcontains $_.Name) {
-		${*r}.Add($_.Name, (New-Object Management.Automation.RuntimeDefinedParameter $_.Name, $_.ParameterType, ${*a}))
+	if (${*pn} -notcontains $_.Name) {
+		${*r}.Add($_.Name, (New-Object System.Management.Automation.RuntimeDefinedParameter $_.Name, $_.ParameterType, ${*a}))
 	}
 }
 ${*r}
@@ -111,12 +110,12 @@ function Add-BuildTask(
 	[Parameter(Position=1)][object[]]$Jobs,
 	[object[]]$After,
 	[object[]]$Before,
-	$If = $true,
+	$If=$true,
 	$Inputs,
 	$Outputs,
 	$Data,
 	$Done,
-	$Source = $MyInvocation,
+	$Source=$MyInvocation,
 	[switch]$Partial
 )
 {
@@ -153,8 +152,7 @@ function Add-BuildTask(
 }
 
 #.ExternalHelp Invoke-Build-Help.xml
-function New-BuildJob([Parameter(Mandatory=1)][string]$Name, [switch]$Safe)
-{
+function New-BuildJob([Parameter(Mandatory=1)][string]$Name, [switch]$Safe) {
 	if ($Safe) {@{$Name = 1}} else {$Name}
 }
 
@@ -224,24 +222,7 @@ function Write-Build([ConsoleColor]$Color, [string]$Text) {
 }
 
 #.ExternalHelp Invoke-Build-Help.xml
-function Get-BuildVersion {[Version]'2.9.12'}
-
-if ($MyInvocation.InvocationName -eq '.') {
-	return @'
-Invoke-Build 2.9.12
-Copyright (c) 2011-2014 Roman Kuzmin
-
-Add-BuildTask (task)
-Assert-Build (assert)
-Get-BuildError (error)
-Get-BuildProperty (property)
-Get-BuildVersion
-Invoke-BuildExec (exec)
-New-BuildJob (job)
-Use-BuildAlias (use)
-Write-Build
-'@
-}
+function Get-BuildVersion {[Version]'2.12.2'}
 
 Set-Alias assert Assert-Build
 Set-Alias error Get-BuildError
@@ -255,16 +236,11 @@ if (!$Host.UI -or !$Host.UI.RawUI -or $Host.Name -eq 'Default Host') {
 	function Write-Build($Color, [string]$Text) {$Text}
 }
 
-function Write-Warning($Message) {
-	$PSCmdlet.WriteWarning($Message)
-	$null = ${*}.Warnings.Add("WARNING: $Message")
-}
-
 function *My {
 	$_.InvocationInfo.ScriptName -like '*\Invoke-Build.ps1'
 }
 
-function *SL($_ = $BuildRoot) {
+function *SL($_=$BuildRoot) {
 	Set-Location -LiteralPath $_ -ErrorAction 1
 }
 
@@ -317,7 +293,7 @@ filter *AB($N, $B) {
 	}
 }
 
-filter *Try($T, $P = [System.Collections.Stack]@()) {
+filter *Try($T, $P=[System.Collections.Stack]@()) {
 	if (!($r = ${*}.All[$_])) {
 		$_ = "Missing task '$_'."
 		throw $(if ($T) {*EI "Task '$($T.Name)': $_" $T} else {$_})
@@ -341,8 +317,7 @@ function *CP {
 		Prm2 = @{}
 		Done = foreach($t in ${*}.All.Values) {if ($t.Elapsed) {$t.Name}}
 	}
-	$p = (Get-Command -Name $BuildFile -CommandType ExternalScript -ErrorAction 1).Parameters
-	if ($p.Count) {
+	if (($p = (Get-Command -Name $BuildFile -CommandType ExternalScript -ErrorAction 1).Parameters).Count) {
 		foreach($k in $p.Keys) {
 			$_.Prm2[$k] = Get-Variable -Name $k -Scope Script -ValueOnly
 		}
@@ -350,9 +325,12 @@ function *CP {
 	$_ | Export-Clixml ${*}.Checkpoint
 }
 
-function *WE {
-	Write-Build 14 (*II $Task)
-	$null = ${*}.Errors.Add($_)
+function *AE($T) {
+	$null = ${*}.Errors.Add([PSCustomObject]@{
+		Error = $_
+		File = $BuildFile
+		Task = $T
+	})
 }
 
 function *TS($I, $H) {
@@ -431,9 +409,9 @@ function *IO {
 }
 
 function *Task {
-	$_, ${private:*p} = $args
-	New-Variable -Name Task -Value ${*}.All[$_] -Option Constant
-	${*p} = "${*p}/$($Task.Name)"
+	New-Variable -Name Task -Value ${*}.All[$args[0]] -Option Constant
+	${private:*p} = $args[1] + '/' + $Task.Name
+	${*}.Task = $Task
 
 	if ($Task.Error) {
 		Write-Build 8 "Task ${*p} failed."
@@ -473,6 +451,7 @@ function *Task {
 				}
 				catch {
 					if (*Bad ${*j} $BuildTask) {throw}
+					*AE ${*}.All[${*j}]
 					Write-Build 12 (*EI "ERROR: Task ${*p}/${*j}: $_" $_)
 				}
 				continue
@@ -523,7 +502,8 @@ function *Task {
 		}
 		$Task.Elapsed = [DateTime]::Now - $Task.Started
 		if ($_ = $Task.Error) {
-			. *WE
+			*AE $Task
+			Write-Build 14 (*II $Task)
 			Write-Build 12 (*EI "ERROR: Task ${*p}: $_" $_)
 		}
 		else {
@@ -535,7 +515,7 @@ function *Task {
 	catch {
 		$Task.Elapsed = [DateTime]::Now - $Task.Started
 		$Task.Error = $_
-		. *WE
+		Write-Build 14 (*II $Task)
 		throw
 	}
 	finally {
@@ -544,19 +524,37 @@ function *Task {
 	}
 }
 
+Set-Alias Invoke-Build ($_ = $MyInvocation.MyCommand.Path)
+Set-Alias Invoke-Builds (Join-Path (Split-Path $_) Invoke-Builds.ps1)
+
+if ($MyInvocation.InvocationName -eq '.') {
+	if ($BuildFile = $MyInvocation.ScriptName) {
+		$ErrorActionPreference = 'Stop'
+		*SL ($BuildRoot = if ($Task) {*FP $Task} else {Split-Path $BuildFile})
+	}
+	Remove-Variable Task, File, Parameters, Checkpoint, Result, Safe, Summary, Resume, WhatIf
+	return
+}
+
+function Write-Warning([Parameter()]$Message) {
+	$PSCmdlet.WriteWarning($Message)
+	$null = ${*}.Warnings.Add([PSCustomObject]@{
+		Message = $Message
+		File = $BuildFile
+		Task = ${*}.Task
+	})
+}
+
 function Enter-Build {} function Enter-BuildTask {} function Enter-BuildJob {}
 function Exit-Build {} function Exit-BuildTask {} function Exit-BuildJob {}
 function Export-Build {} function Import-Build {}
 
 $ErrorActionPreference = 'Stop'
-Set-Alias Invoke-Build ($_ = $MyInvocation.MyCommand.Path)
-Set-Alias Invoke-Builds (Join-Path (Split-Path $_) Invoke-Builds.ps1)
-
 if (!${*Parameters}) {
-	foreach($_ in $PSBoundParameters.GetEnumerator()) {
-		if (${*names} -notcontains $_.Key) {
+	foreach($_ in $PSBoundParameters.Keys) {
+		if (${*pn} -notcontains $_) {
 			if (!${*Parameters}) {${*Parameters} = @{}}
-			${*Parameters}[$_.Key] = $_.Value
+			${*Parameters}[$_] = $PSBoundParameters[$_]
 		}
 	}
 }
@@ -574,6 +572,7 @@ New-Variable * -Description Invoke-Build ([PSCustomObject]@{
 	Started = [DateTime]::Now
 	Elapsed = $null
 	Error = $null
+	Task = $null
 })
 if (${private:*?} = $BuildTask -eq '??' -or $BuildTask -eq '?') {
 	$WhatIf = $true
@@ -590,12 +589,14 @@ ${private:*Safe} = $Safe
 ${private:*Summary} = $Summary
 Remove-Variable Task, File, Parameters, Checkpoint, Result, Safe, Summary, Resume
 
+${private:*b} = 1
 ${private:*r} = 0
 try {
 	if ($BuildTask -eq '**') {
 		$BuildTask = @('*'; $BuildTask -ne '**')
+		${*b} = 0
 		foreach($_ in $BuildFile) {
-			Invoke-Build $BuildTask $_.FullName
+			Invoke-Build $BuildTask $_.FullName -Safe:${*Safe}
 		}
 		${*r} = 1
 		return
@@ -629,11 +630,11 @@ try {
 	}
 
 	if ($BuildTask -eq '*') {
-		$BuildTask = :task foreach($_ in ${*a}.Keys) {
+		$BuildTask = :_ foreach($_ in ${*a}.Keys) {
 			foreach(${**} in ${*a}.Values) {
 				if (${**}.Jobs -contains $_) {
 					$_ | *Try
-					continue task
+					continue _
 				}
 			}
 			$_
@@ -642,9 +643,10 @@ try {
 	elseif (!$BuildTask -or '.' -eq $BuildTask) {
 		$BuildTask = if (${*a}['.']) {'.'} else {${*a}.Item(0).Name}
 	}
-	Write-Build 11 "Build $($BuildTask -join ', ') $BuildFile"
 	$BuildTask | *Try
 
+	Write-Build 11 "Build $($BuildTask -join ', ') $BuildFile"
+	${*b} = 0
 	try {
 		. *UC Enter-Build
 		if (${*cp}) {
@@ -652,26 +654,31 @@ try {
 				${*a}[$_].Elapsed = [TimeSpan]::Zero
 			}
 			foreach($_ in ${*cp}.Prm2.GetEnumerator()) {
-				Set-Variable -Name $_.Key -Value $_.Value
+				Set-Variable $_.Key $_.Value
 			}
 			. *UC Import-Build ${*cp}.User
 		}
 		foreach($_ in $BuildTask) {
-			*Task $_
+			*Task $_ ''
 		}
 		if (${*Checkpoint}) {
 			[System.IO.File]::Delete(${*Checkpoint})
 		}
 	}
 	finally {
+		${*}.Task = $null
 		. *UC Exit-Build
 	}
 	${*r} = 1
 }
 catch {
 	${*r} = 2
+	*AE ${*}.Task
 	${*}.Error = $_
-	if (!${*Safe}) {
+	if (${*Safe}) {
+		Write-Build 12 (*EI "ERROR: $_" $_)
+	}
+	else {
 		if (*My) {$PSCmdlet.ThrowTerminatingError($_)}
 		throw
 	}
@@ -683,20 +690,25 @@ finally {
 		$e = ${*}.Errors
 		if (${*Summary}) {
 			Write-Build 11 'Build summary:'
-			foreach($_ in ${*}.Tasks) {
+			foreach($_ in $t) {
 				'{0,-16} {1} - {2}:{3}' -f $_.Elapsed, $_.Name, $_.InvocationInfo.ScriptName, $_.InvocationInfo.ScriptLineNumber
 				if ($_ = $_.Error) {
-					Write-Build 12 $(if (*My) {"ERROR: $_"} else {*EI "ERROR: $_" $_})
+					Write-Build 12 "ERROR: $(if (*My) {$_} else {*EI $_ $_})"
 				}
 			}
 		}
-		($w = ${*}.Warnings)
+		if ($w = ${*}.Warnings) {
+			foreach($_ in $w) {
+				"WARNING: $($_.Message)$(if ($_.Task) {" Task: $($_.Task.Name)."}) File: $($_.File)."
+			}
+		}
 		if (${*0}) {
 			${*0}.Tasks.AddRange($t)
 			${*0}.Errors.AddRange($e)
 			${*0}.Warnings.AddRange($w)
 		}
-		$c, $m = if (${*r} -eq 2) {12, 'Build FAILED'}
+		$c, $m = if (${*b}) {12, "Build ABORTED $BuildFile"}
+		elseif (${*r} -eq 2) {12, 'Build FAILED'}
 		elseif ($e) {14, 'Build completed with errors'}
 		elseif ($w) {14, 'Build succeeded with warnings'}
 		else {10, 'Build succeeded'}
